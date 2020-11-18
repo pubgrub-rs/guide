@@ -59,5 +59,7 @@ impl<P: Package, V: Version> DependencyProvider<P, V> for CachingDependencyProvi
 }
 ```
 
-A complete caching example based on the `OfflineDependencyProvider`
-is available in `examples/caching_dependency_provider.rs`.
+An example of caching based on the `OfflineDependencyProvider`
+is available in [`examples/caching_dependency_provider.rs`][example].
+
+[example]: https://github.com/pubgrub-rs/pubgrub/blob/release/examples/caching_dependency_provider.rs
