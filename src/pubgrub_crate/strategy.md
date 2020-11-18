@@ -60,7 +60,7 @@ Generalizing this strategy to picking the potential package with the lowest
 number of valid versions is a rather good heuristic performance-wise.
 
 This strategy is the one employed by the `OfflineDependencyProvider`.
-For convenience, we also provide a helper function `make_fewest_versions_decision_helper`
+For convenience, we also provide a helper function `choose_package_with_fewest_versions`
 directly embedding this strategy.
 It can be used directly in `choose_package_version` if provided
 a helper function to retrieve existing versions of a package
@@ -70,7 +70,7 @@ a helper function to retrieve existing versions of a package
 ## Picking a version
 
 By default, the version returned by the helper function
-`make_fewest_versions_decision_helper` is the first compatible one
+`choose_package_with_fewest_versions` is the first compatible one
 in the iterator returned by `list_available_versions` for the chosen package.
 So you can order the iterator with preferred versions first
 and they will be picked by the solver.
@@ -88,5 +88,5 @@ In general, letting the dependency provider choose a version in
 - choosing already downloaded versions,
 - choosing versions specified in a lock file,
 
-and many other desirable behavior for the resolver,
+and many other desirable behaviors for the resolver,
 controlled directly by the dependency provider.
