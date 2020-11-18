@@ -6,7 +6,7 @@ where leaves are external incompatibilities, defined as follows,
 ```rust
 pub enum External<P: Package, V: Version> {
     NotRoot(P, V),
-    NoVersion(P, Range<V>),
+    NoVersions(P, Range<V>),
     UnavailableDependencies(P, Range<V>),
     FromDependencyOf(P, Range<V>, P, Range<V>),
 }
