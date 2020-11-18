@@ -1,14 +1,13 @@
 # Benchmarking
 
-TODO: This section has to be improved.
-For now I'm just linking to issue #27 where
-I described a bit how to start with benchmarking.
+Performance optimization is a tedious but very rewarding practice if done right.
+It requires rigor and sometime arcane knowledge of lol level details.
+If you are interested in performance optimization for pubgrub,
+we suggest reading first [The Rust Performance Book][perf-book]
 
-## Performance analysis
+[perf-book]: https://nnethercote.github.io/perf-book/
 
-## Profiling
-
-## Effect of code layout on performance
+## Side note about code layout and performance
 
 Changing your username has an impact on the performances of your code.
 This is not clickbait I promess, but simply an effect of layout changes.
