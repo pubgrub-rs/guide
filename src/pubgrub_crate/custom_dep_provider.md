@@ -18,9 +18,8 @@ pub trait DependencyProvider<P: Package, V: Version> {
     /// potential valid packages and version ranges are preselected by the resolver,
     /// and the dependency provider must choose.
     ///
-    /// Note: the type `T`, used both in the method arguments and the return type,
-    /// ensures that this method returns an item from the `packages` argument.
-    fn make_decision<T: Borrow<P>, U: Borrow<Range<V>>>(
+    /// Note: the type `T` ensures that this returns an item from the `packages` argument.
+    fn choose_package_version<T: Borrow<P>, U: Borrow<Range<V>>>(
         &self,
         potential_packages: impl Iterator<Item = (T, U)>,
     ) -> Result<(T, Option<V>), Box<dyn Error>>;
@@ -45,10 +44,10 @@ pub trait DependencyProvider<P: Package, V: Version> {
 ```
 
 As you can see, implementing the `DependencyProvider` trait requires you
-to implement two functions, `make_decision` and `get_dependencies`.
-The first one, `make_decision` is called by the resolver when a new
+to implement two functions, `choose_package_version` and `get_dependencies`.
+The first one, `choose_package_version` is called by the resolver when a new
 package has to be tried.
-At that point, the resolver call `make_decision` with a list
+At that point, the resolver call `choose_package_version` with a list
 of potential packages and their associated acceptable version ranges.
 It's then the role of the dependency retriever to pick a package
 and a suitable version in that range.
@@ -59,7 +58,7 @@ it could be implemented as follows.
 We discuss advanced [decision making strategies later](./strategy.md).
 
 ```rust
-fn make_decision<T: Borrow<P>, U: Borrow<Range<V>>>(
+fn choose_package_version<T: Borrow<P>, U: Borrow<Range<V>>>(
     &self,
     potential_packages: impl Iterator<Item = (T, U)>,
 ) -> Result<(T, Option<V>), Box<dyn Error>> {

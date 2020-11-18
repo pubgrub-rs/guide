@@ -42,7 +42,7 @@ pub struct CachingDependencyProvider<P: Package, V: Version> {
 }
 
 impl<P: Package, V: Version> DependencyProvider<P, V> for CachingDependencyProvider<P, V> {
-    fn make_decision<...>(...) -> ... { ... }
+    fn choose_package_version<...>(...) -> ... { ... }
     fn get_dependencies(
         &self,
         package: &P,

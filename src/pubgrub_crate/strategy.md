@@ -29,10 +29,10 @@ The resolver takes care of making a preselection for potential packages
 and corresponding ranges of versions.
 Then it's the dependency provider that has the freedom of employing
 the strategy it wants to pick one package version within
-the `make_decision` method.
+the `choose_package_version` method.
 
 ```rust
-fn make_decision<T: Borrow<P>, U: Borrow<Range<V>>>(
+fn choose_package_version<T: Borrow<P>, U: Borrow<Range<V>>>(
     &self,
     potential_packages: impl Iterator<Item = (T, U)>,
 ) -> Result<(T, Option<V>), Box<dyn Error>>;
@@ -62,7 +62,7 @@ number of valid versions is a rather good heuristic performance-wise.
 This strategy is the one employed by the `OfflineDependencyProvider`.
 For convenience, we also provide a helper function `make_fewest_versions_decision_helper`
 directly embedding this strategy.
-It can be used directly in `make_decision` if provided
+It can be used directly in `choose_package_version` if provided
 a helper function to retrieve existing versions of a package
 `list_available_versions: Fn(&P) -> Iterator<Item = V>`.
 
@@ -81,7 +81,7 @@ Such behavior may be desirable for checking that dependencies lower bounds
 still pass the code tests for example.
 
 In general, letting the dependency provider choose a version in
-`make_decision` provides a great deal of flexibility and enables things like
+`choose_package_version` provides a great deal of flexibility and enables things like
 
 - choosing the newest versions,
 - choosing the oldest versions,
