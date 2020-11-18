@@ -51,8 +51,8 @@ and you have to pre-register all known dependencies with calls to
 before being able to use it in the `resolve` function.
 
 Dependencies are specified with a `Range`,
-ranges being versions constraints defining sets of versions.
+ranges being version constraints defining sets of versions.
 In most cases, you would use `Range::between(v1, v2)`
 which means any version higher or equal to `v1` and strictly lower than `v2`.
 In the previous example, we just used `Range::any()`
-which basically means any version.
+which basically means "any version".
