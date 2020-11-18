@@ -17,5 +17,6 @@
   - [Building a report tree](./internals/report_tree.md)
 - [Testing and benchmarking](./testing/intro.md)
   - [Property testing](./testing/property.md)
+  - [Comparison with a SAT solver](./testing/sat.md)
   - [Benchmarking](./testing/benchmarking.md)
 - [How can I contribute? Here are some ideas](./contributing.md)
