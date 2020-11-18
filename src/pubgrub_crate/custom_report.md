@@ -5,9 +5,13 @@ where leaves are external incompatibilities, defined as follows,
 
 ```rust
 pub enum External<P: Package, V: Version> {
+    /// Initial incompatibility aiming at picking the root package for the first decision.
     NotRoot(P, V),
+    /// No versions from range satisfy given constraints.
     NoVersions(P, Range<V>),
+    /// Dependencies of the package are unavailable for versions in that range.
     UnavailableDependencies(P, Range<V>),
+    /// Incompatibility coming from the dependencies of a given package.
     FromDependencyOf(P, Range<V>, P, Range<V>),
 }
 ```
@@ -16,9 +20,17 @@ and nodes are derived incompatibilities, defined as follows.
 
 ```rust
 pub struct Derived<P: Package, V: Version> {
+    /// Terms of the incompatibility.
     pub terms: Map<P, Term<V>>,
+    /// Indicate if that incompatibility is present multiple times
+    /// in the derivation tree.
+    /// If that is the case, it has a unique id, provided in that option.
+    /// Then, we may want to only explain it once,
+    /// and refer to the explanation for the other times.
     pub shared_id: Option<usize>,
+    /// First cause.
     pub cause1: Box<DerivationTree<P, V>>,
+    /// Second cause.
     pub cause2: Box<DerivationTree<P, V>>,
 }
 ```
