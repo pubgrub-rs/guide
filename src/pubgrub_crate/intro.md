@@ -20,5 +20,8 @@ which implements `Version` for versions expressed as `Major.Minor.Patch`.
 We also provide the `NumberVersion` implementation of `Version`,
 which is basically just a newtype for non-negative integers, 0, 1, 2, etc.
 
+> Note that the complete semver specification also involves
+> pre-release and metadata tags, not handled in our `SemanticVersion` simple type.
+
 Now that we know the `Package` and `Version` trait requirements,
 let's explain how to actually use `pubgrub` with a simple example.
