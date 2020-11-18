@@ -13,9 +13,9 @@ The strategy employed to choose such package and version
 cannot change the existence of a solution or not,
 but can drastically change the performances of the solver,
 or the properties of the solution.
-The documentation of Pub
-(PubGrub implementation for the dart programming language)
-states the following.
+The documentation of [Pub](https://github.com/dart-lang/pub)
+([Dart](https://github.com/dart-lang/language)'s package manager that uses PubGrub under the hood)
+[states the following](https://github.com/dart-lang/pub/blame/SDK-2.10.0-64.0.dev/doc/solver.md#L446-L449):
 
 > Pub chooses the latest matching version
 > of the package with the fewest versions
@@ -24,11 +24,11 @@ states the following.
 > since these packages will run out of versions to try more quickly.
 > But there's likely room for improvement in these heuristics.
 
-In pubgrub, decision making responsability is split in two places.
+In our implementation of PubGrub, decision making responsibility is divided into two pieces.
 The resolver takes care of making a preselection for potential packages
 and corresponding ranges of versions.
 Then it's the dependency provider that has the freedom of employing
-the strategy it wants to pick one package version within
+the strategy of picking a single package version within
 the `choose_package_version` method.
 
 ```rust
