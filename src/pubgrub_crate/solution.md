@@ -52,10 +52,12 @@ So instead of seeing things like this in the report:
 Because there is no version of foo in 1.0.1 <= v < 2.0.0
 and foo 1.0.0 depends on bar 2.0.0 <= v < 3.0.0,
 foo 1.0.0 <= v < 2.0.0 depends on bar 2.0.0 <= v < 3.0.0.
+...
 ```
 
-you may have directly:
+You will directly see something like:
 
 ```txt
-foo 1.0.0 <= v < 2.0.0 depends on bar 2.0.0 <= v < 3.0.0.
+Because foo 1.0.0 <= v < 2.0.0 depends on bar 2.0.0,
+...
 ```
