@@ -76,8 +76,8 @@ For a given package version, this method should return
 the corresponding dependencies.
 Retrieving those dependencies may fail due to IO or other issues,
 and in such cases the function should return an error.
-Even if it succeeds, we want to distinguish the cases
-where the answer is that we don't know the package dependencies
+Even if it does not fail, we want to distinguish the cases
+where the dependency provider does not know the answer
 and the cases where the package has no dependencies.
 For this reason, the return type in case of a success is the
 `Dependencies` enum, defined as follows.
