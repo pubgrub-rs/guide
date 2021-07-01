@@ -6,12 +6,12 @@ By design, the current implementation of PubGrub is rather well suited to handle
 2. Versions are in a discrete set, with a total order.
 3. The successor of a given version is always uniquely defined.
 4. Dependencies of a package version are fixed.
-5. One version must be selected per package depended on.
+5. Exactly one version must be selected per package depended on.
 
 The fact that packages are uniquely identified (1) is perhaps the only constraint that makes sense for all common dependency systems.
-But for the rest of the constraints, they are all inadequate for common real-world dependency systems.
+But for the rest of the constraints, they are all inadequate for some common real-world dependency systems.
 For example, it's possible to have dependency systems where order is not required for versions (2).
-In such systems, dependencies must be specified with exact sets of compatible versions, since ranges make no sense.
+In such systems, dependencies must be specified with exact sets of compatible versions, and bounded ranges make no sense.
 Being able to uniquely define the successor of any version (3) is also a constraint that is not respected if versions have a system of pre-releases.
 Indeed, what is the successor of `2.0.0-alpha`?
 We can't tell if that is `2.0.0` or `2.0.0-beta` or `2.0.0-whatever`.
