@@ -46,12 +46,12 @@ We define an `Index`, storing all dependencies (`Deps`) of every package version
 // Use NumberVersion, which are simple u32 for the versions.
 use pubgrub::version::NumberVersion as Version;
 /// Each package is identified by its name.
-pub type Package = String;
+pub type PackageName = String;
 
 /// Global registry of known packages.
 pub struct Index {
     /// Specify dependencies of each package version.
-    pub packages: Map<Package, BTreeMap<Version, Deps>>,
+    pub packages: Map<PackageName, BTreeMap<Version, Deps>>,
 }
 ```
 
@@ -63,9 +63,9 @@ pub type Feature = String;
 
 pub struct Deps {
     /// The regular, mandatory dependencies.
-    pub mandatory: Map<Package, Dep>,
+    pub mandatory: Map<PackageName, Dep>,
     /// The optional, feature-gated dependencies.
-    pub optional: Map<Feature, Map<Package, Dep>>,
+    pub optional: Map<Feature, Map<PackageName, Dep>>,
 }
 ```
 
@@ -99,8 +99,7 @@ index.add_feature("d", 1, "feat", &[("f", 1.., &[])]);
 ### Implementing a dependency provider for the index
 
 Now that our `Index` is ready, let's implement the `DependencyProvider` trait on it.
-As we explained before, we'll need to differenciate optional features from base packages.
-So we define a new `Package` type, located in the `optional_deps.rs` module of the crate, contrary to the type alias `type Package = String` located in the `index.rs` module previously defined.
+As we explained before, we'll need to differenciate optional features from base packages, so we define a new `Package` type.
 
 ```rust
 /// A package is either a base package like "a",
