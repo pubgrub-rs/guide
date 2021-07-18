@@ -34,4 +34,188 @@ So if the "heavy" option of package "B" at version v = 3 brings a dependency to 
 
 ## Example implementation
 
-TODO: link and explain the example in advanced_dependency_providers.
+A complete example implementation is available in the [`optional-deps` crate of the `advanced_dependency_providers` repository][optional-deps-crate].
+Let's give an explanation of that implementation.
+For the sake of simplicity, we will consider packages of type `String` and versions of type `NumberVersion`, which is just a newtype around `u32` implementing the `Version` trait.
+
+### Defining an index of packages
+
+We define an `Index`, storing all dependencies (`Deps`) of every package version in a double hash map, first indexed by package, then by version.
+
+```rust
+// Use NumberVersion, which are simple u32 for the versions.
+use pubgrub::version::NumberVersion as Version;
+/// Each package is identified by its name.
+pub type Package = String;
+
+/// Global registry of known packages.
+pub struct Index {
+    /// Specify dependencies of each package version.
+    pub packages: Map<Package, BTreeMap<Version, Deps>>,
+}
+```
+
+Dependencies listed in the `Index` include both mandatory and optional dependencies.
+Optional dependencies are identified, grouped, and gated by an option called a "feature".
+
+```rust
+pub type Feature = String;
+
+pub struct Deps {
+    /// The regular, mandatory dependencies.
+    pub mandatory: Map<Package, Dep>,
+    /// The optional, feature-gated dependencies.
+    pub optional: Map<Feature, Map<Package, Dep>>,
+}
+```
+
+Finally, each dependency is specified with a version range, and with a set of activated features.
+
+```rust
+pub struct Dep {
+    /// The range dependended upon.
+    pub range: Range<Version>,
+    /// The activated features for that dependency.
+    pub features: Set<Feature>,
+}
+```
+
+For convenience, we added the `add_deps` and `add_feature` functions to help building an index in the tests.
+
+```rust
+let mut index = Index::new();
+// Add package "a" to the index at version 0 with no dependency.
+index.add_deps("a", 0, &[]);
+// Add package "a" at version 1 with a dependency to "b" at version "v >= 1".
+index.add_deps("a", 1, &[("b", 1.., &[])]);
+// Add package "c" at version 1 with a dependency to "d" at version "v < 4" with the feature "feat".
+index.add_deps("c", 1, &[("d", ..4, &["feat"])]);
+// Add feature "feat" to package "d" at version 1 with the optional dependency to "f" at version "v >= 1".
+// If "d" at version 1 does not exist yet in the index, this also adds it with no mandatory dependency,
+// as if we had called index.add_deps("d", 1, &[]).
+index.add_feature("d", 1, "feat", &[("f", 1.., &[])]);
+```
+
+### Implementing a dependency provider for the index
+
+Now that our `Index` is ready, let's implement the `DependencyProvider` trait on it.
+As we explained before, we'll need to differenciate optional features from base packages.
+So we define a new `Package` type, located in the `optional_deps.rs` module of the crate, contrary to the type alias `type Package = String` located in the `index.rs` module previously defined.
+
+```rust
+/// A package is either a base package like "a",
+/// or a feature package, corresponding to a feature associated to a base package.
+pub enum Package {
+    Base(String),
+    Feature { base: String, feature: String },
+}
+```
+
+Let's implement the first function required by a dependency provider, `choose_package_version`.
+For that we defined the `base_pkg()` method on a `Package` that returns the string of the base package.
+And we defined the `available_versions()` method on an `Index` to list existing versions of a given package.
+Then we simply called the `choose_package_with_fewest_versions` helper function provided by pubgrub.
+
+```rust
+fn choose_package_version<T: Borrow<Package>, U: Borrow<Range<Version>>>(
+    &self,
+    potential_packages: impl Iterator<Item = (T, U)>,
+) -> Result<(T, Option<Version>), Box<dyn std::error::Error>> {
+    Ok(pubgrub::solver::choose_package_with_fewest_versions(
+        |p| self.available_versions(p.base_pkg()).cloned(),
+        potential_packages,
+    ))
+}
+```
+
+This was very straightforward.
+Implementing the second function, `get_dependencies`, requires just a bit more work but is also quite easy.
+The exact complete version is available in the code, but again, for the sake of simplicity and readability, let's just deal with the happy path.
+
+```rust
+fn get_dependencies(
+    &self,
+    package: &Package,
+    version: &Version,
+) -> Result<Dependencies<Package, Version>, ...> {
+    // Retrieve the dependencies in the index.
+    let deps =
+        self.packages
+            .get(package.base_pkg()).unwrap()
+            .get(version).unwrap();
+
+    match package {
+        // If we asked for a base package, we simply return the mandatory dependencies.
+        Package::Base(_) => Ok(Dependencies::Known(from_deps(&deps.mandatory))),
+        // Otherwise, we concatenate the feature deps with a dependency to the base package.
+        Package::Feature { base, feature } => {
+            let feature_deps = deps.optional.get(feature).unwrap();
+            let mut all_deps = from_deps(feature_deps);
+            all_deps.insert(
+                Package::Base(base.to_string()),
+                Range::exact(version.clone()),
+            );
+            Ok(Dependencies::Known(all_deps))
+        },
+    }
+}
+```
+
+Quite easy right?
+The helper function `from_deps` is where each dependency is transformed from its `String` form into its `Package` form.
+In pseudo-code (not compiling, but you get how it works) it looks like follows.
+
+```rust
+/// Helper function to convert Index deps into what is expected by the dependency provider.
+fn from_deps(deps: &Map<String, Dep>) -> DependencyConstraints<Package, Version> {
+    deps.iter().map(create_feature_deps)
+        .flatten()
+        .collect()
+}
+
+fn create_feature_deps(
+    (base_pkg, dep): (&String, &Dep)
+) -> impl Iterator<Item = (Package, Range<Version>)> {
+    if dep.features.is_empty() {
+        // If the dependency has no optional feature activated,
+        // we simply add a dependency to the base package.
+        std::iter::once((Package::Base(base_pkg), dep.range))
+    } else {
+        // Otherwise, we instead add one dependency per activated feature,
+        // but not to the base package itself (we could but no need).
+        dep.features.iter().map(|feat| {
+            (Package::Feature { base: base_pkg, feature: feat }, dep.range)
+        })
+    }
+}
+```
+
+We now have implemented the `DependencyProvider` trait.
+The only thing left is testing it with example dependencies.
+For that, we setup few helper functions and we wrote some tests, that you can run with a call to `cargo test --lib`.
+Below is one of those tests.
+
+```rust
+#[test]
+fn success_when_multiple_features() {
+    let mut index = Index::new();
+    index.add_deps("a", 0, &[("b", .., &["feat1", "feat2"])]);
+    index.add_feature("b", 0, "feat1", &[("f1", .., &[])]);
+    index.add_feature("b", 0, "feat2", &[("f2", .., &[])]);
+    index.add_deps::<R>("f1", 0, &[]);
+    index.add_deps::<R>("f2", 0, &[]);
+    assert_map_eq(
+        &resolve(&index, "a", 0).unwrap(),
+        &select(&[
+            ("a", 0),
+            ("b", 0),
+            ("b/feat1", 0),
+            ("b/feat2", 0),
+            ("f1", 0),
+            ("f2", 0),
+        ]),
+    );
+}
+```
+
+[optional-deps-crate]: https://github.com/pubgrub-rs/advanced_dependency_providers/tree/main/optional-deps
