@@ -10,7 +10,7 @@
   - [Writing your own error reporting logic](./pubgrub_crate/custom_report.md)
 - [Advanced usage and limitations](./limitations/intro.md)
   - [Optional dependencies](./limitations/optional_deps.md)
-  - [Multiple versions of a package](./limitations/multiple_versions.md)
+  - [Allowing multiple versions of a package](./limitations/multiple_versions.md)
   - [Pre-release versions](./limitations/prerelease_versions.md)
 - [Internals of the PubGrub algorithm](./internals/intro.md)
   - [Overview of the algorithm](./internals/overview.md)
