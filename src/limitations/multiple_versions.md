@@ -55,15 +55,15 @@ For example, if "a" @ 1.4 depends on "b", we create the proxi package "a#1@1.4->
 It's a bit of a mouthful, but once you learn how to read it, it makes sense.
 
 Let's consider the following example, with "a" being our root package.
-- "a" @ 1.4 depends on "b" in range `1.0 <= v < 3.0`
+- "a" @ 1.4 depends on "b" in range `1.1 <= v < 2.9`
 - "b" @ 1.3 depends on "c" at version `1.1`
 - "b" @ 2.7 depends on "d" at version `3.1`
 
 Using buckets and proxis, we can rewrite this dependency system as follows.
 - "a#1" @ 1.4 depends on "a#1@1.4->b" at any version (we use the proxi).
 - "a#1@1.4->b" proxi exists in two versions, one per bucket of "b".
-- "a#1@1.4->b" @ 1.0 depends on "b#1" in range `1.0 <= v < 2.0` (the first bucket).
-- "a#1@1.4->b" @ 2.0 depends on "b#2" in range `2.0 <= v < 3.0` (the second bucket).
+- "a#1@1.4->b" @ 1.0 depends on "b#1" in range `1.1 <= v < 2.0` (the first bucket intersected with the dependency range).
+- "a#1@1.4->b" @ 2.0 depends on "b#2" in range `2.0 <= v < 2.9` (the second bucket intersected with the dependency range).
 - "b#1" @ 1.3 depends on "c#1" at version `1.1`.
 - "b#2" @ 2.7 depends on "d#3" at version `3.1`.
 
