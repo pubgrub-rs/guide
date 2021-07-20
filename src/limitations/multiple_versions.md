@@ -67,10 +67,11 @@ Using buckets and proxis, we can rewrite this dependency system as follows.
 - "b#1" @ 1.3 depends on "c#1" at version `1.1`.
 - "b#2" @ 2.7 depends on "d#3" at version `3.1`.
 
-There are potentially two solutions to that system, the first one being the following.
+There are potentially two solutions to that system, the one with the newest versions is the following.
 - "a#1" @ 1.4
-- "a#1@1.4->b" @ 1.0
-- "b#1" @ 1.3
+- "a#1@1.4->b" @ 2.0
+- "b#2" @ 2.7
+- "d#3" @ 3.1
 
 And if we want to express the solution in terms of the original packages, we just have to remove the proxi packages from the solution.
 
