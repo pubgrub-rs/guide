@@ -11,6 +11,7 @@
 - [Advanced usage and limitations](./limitations/intro.md)
   - [Optional dependencies](./limitations/optional_deps.md)
   - [Allowing multiple versions of a package](./limitations/multiple_versions.md)
+  - [Versions in a continuous space](./limitations/continuous_versions.md)
   - [Pre-release versions](./limitations/prerelease_versions.md)
 - [Internals of the PubGrub algorithm](./internals/intro.md)
   - [Overview of the algorithm](./internals/overview.md)
