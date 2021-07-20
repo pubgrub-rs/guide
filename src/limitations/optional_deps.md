@@ -40,7 +40,7 @@ For the sake of simplicity, we will consider packages of type `String` and versi
 
 ### Defining an index of packages
 
-We define an `Index`, storing all dependencies (`Deps`) of every package version in a double hash map, first indexed by package, then by version.
+We define an `Index`, storing all dependencies (`Deps`) of every package version in a double map, first indexed by package, then by version.
 
 ```rust
 // Use NumberVersion, which are simple u32 for the versions.

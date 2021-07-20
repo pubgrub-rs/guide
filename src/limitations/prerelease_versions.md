@@ -15,8 +15,8 @@ In practice, we could say that the version that comes after "1-alpha0" is "1-alp
 For example, "2.0.0-beta" is meant to exist previous to version "2.0.0".
 Yet, it is not supposed to be contained in the set described by `1.0.0 <= v < 2.0.0`, and only within sets where one of the bounds contains a pre-release marker such as `2.0.0-alpha <= v < 2.0.0`.
 This poses a problem to the dependency solver because of backtracking.
-Indeed, the PubGrub algorithm relies on knowledge accumulated all allong the propagation of the solver front.
-And this knowledge is composed of facts, that are thus never backtracked even when backtracking happens.
+Indeed, the PubGrub algorithm relies on knowledge accumulated all along the propagation of the solver front.
+And this knowledge is composed of facts, that are thus never removed even when backtracking happens.
 Those facts are called incompatibilities and more info about those is available in the "Internals" section of the guide.
 The problem is that if a fact recalls that there is no version within the `1.0.0 <= v < 2.0.0` range, backtracking to a situation where we ask for a version within `2.0.0-alpha <= v < 2.0.0` will return nothing even without checking if a pre-release exists in that range.
 And this is one of the fundamental mechanisms of the algorithm, so we should not try to alter it.
