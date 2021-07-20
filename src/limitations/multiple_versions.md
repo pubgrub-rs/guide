@@ -77,4 +77,165 @@ And if we want to express the solution in terms of the original packages, we jus
 
 ## Example implementation
 
-TODO
+A complete example implementation of this extension allowing multiple versions is available in the [allow-multiple-versions crate of the advanced_dependency_providers repository][multiple-versions-crate].
+In that example, packages are of the type `String` and versions of the type `SemanticVersion` defined in pubgrub, which does not account for pre-releases, just the (Major, Minor, Patch) format of versions.
+
+[multiple-versions-crate]: https://github.com/pubgrub-rs/advanced_dependency_providers/tree/main/allow-multiple-versions
+
+### Defining an index of packages
+
+Inside the `index.rs` module, we define a very basic `Index`, holding all packages known, as well as a helper function `add_deps` easing the writing of tests.
+
+```rust
+/// Each package is identified by its name.
+pub type PackageName = String;
+/// Alias for dependencies.
+pub type Deps = Map<PackageName, Range<SemVer>>;
+
+/// Global registry of known packages.
+pub struct Index {
+    /// Specify dependencies of each package version.
+    pub packages: Map<PackageName, BTreeMap<SemVer, Deps>>,
+}
+
+// Initialize an empty index.
+let mut index = Index::new();
+// Add package "a" to the index at version 1.0.0 with no dependency.
+index.add_deps::<R>("a", (1, 0, 0), &[]);
+// Add package "a" to the index at version 2.0.0 with a dependency to "b" at versions >= 1.0.0.
+index.add_deps("a", (2, 0, 0), &[("b", (1, 0, 0)..)]);
+```
+
+### Implementing a dependency provider for the index
+
+Since our `Index` is ready, we now have to implement the `DependencyProvider` trait on it.
+As explained previously, we'll need to differenciate packages representing buckets and proxis, so we define this new `Package` type.
+
+```rust
+/// A package is either a bucket, or a proxi between a source and a target package.
+pub enum Package {
+    /// "a#1"
+    Bucket(Bucket),
+    /// source -> target
+    Proxi {
+        source: (Bucket, SemVer),
+        target: String,
+    },
+}
+
+/// A bucket corresponds to a given package, and match versions
+/// in a range identified by their major component.
+pub struct Bucket {
+    pub name: String, // package name
+    pub bucket: u32, // 1 maps to the range 1.0.0 <= v < 2.0.0
+}
+```
+
+In order to implement the first required method, `choose_package_version`, we simply reuse the `choose_package_with_fewest_versions` helper function provided by pubgrub.
+That one requires a list of available versions for each package, so we have to create that list.
+As explained previously, listing the existing (virtual) versions depend on if the package is a bucket or a proxi.
+For a bucket package, we simply need to retrieve the original versions and filter out those outside of the bucket.
+
+```rust
+match package {
+    Package::Bucket(p) => {
+        let bucket_range = Range::between((p.bucket, 0, 0), (p.bucket + 1, 0, 0));
+        self.available_versions(&p.name)
+            .filter(|v| bucket_range.contains(*v))
+    }
+    ...
+```
+
+If the package is a proxi however, there is one version per bucket in the target of the proxi.
+
+```rust
+match package {
+    Package::Proxi { target, .. } => {
+        bucket_versions(self.available_versions(&target))
+    }
+    ...
+}
+
+/// Take a list of versions, and output a list of the corresponding bucket versions.
+/// So [1.1, 1.2, 2.3] -> [1.0, 2.0]
+fn bucket_versions(
+    versions: impl Iterator<Item = SemVer>
+) -> impl Iterator<Item = SemVer> { ... }
+```
+
+Additionally, we can filter out buckets that are outside of the dependency range in the original dependency leading to that proxi package.
+Otherwise it will add wastefull computation to the solver, but we'll leave that out of this walkthrough.
+
+The `get_dependencies` method is slightly hairier to implement, so instead of all the code, we will just show the structure of the function in the happy path, with its comments.
+
+```rust
+fn get_dependencies(
+    &self,
+    package: &Package,
+    version: &SemVer,
+) -> Result<Dependencies<Package, SemVer>, ...> {
+    let all_versions = self.packages.get(package.pkg_name());
+    ...
+    match package {
+        Package::Bucket(pkg) => {
+            // If this is a bucket, we convert each original dependency into
+            // either a dependency to a bucket package if the range is fully contained within one bucket,
+            // or a dependency to a proxi package at any version otherwise.
+            let deps = all_versions.get(version);
+            ...
+            let pkg_deps = deps.iter().map(|(name, range)| {
+                    if let Some(bucket) = single_bucket_spanned(range) {
+                        ...
+                        (Package::Bucket(bucket_dep), range.clone())
+                    } else {
+                        ...
+                        (proxi, Range::any())
+                    }
+                })
+                .collect();
+            Ok(Dependencies::Known(pkg_deps))
+        }
+        Package::Proxi { source, target } => {
+            // If this is a proxi package, it depends on a single bucket package, the target,
+            // at a range of versions corresponding to the bucket range of the version asked,
+            // intersected with the original dependency range.
+            let deps = all_versions.get(&source.1);
+            ...
+            let mut bucket_dep = Map::default();
+            bucket_dep.insert(
+                Package::Bucket(Bucket {
+                    name: target.clone(),
+                    bucket: target_bucket,
+                }),
+                bucket_range.intersection(target_range),
+            );
+            Ok(Dependencies::Known(bucket_dep))
+        }
+    }
+}
+
+/// If the range is fully contained within one bucket,
+/// this returns that bucket identifier, otherwise, it returns None.
+fn single_bucket_spanned(range: &Range<SemVer>) -> Option<u32> { ... }
+```
+
+That's all!
+The implementation also contains tests, with helper functions to build them.
+Here is the test corresponding to the example we presented above.
+
+```rust
+#[test]
+/// Example in guide.
+fn success_when_simple_version() {
+    let mut index = Index::new();
+    index.add_deps("a", (1, 4, 0), &[("b", (1, 1, 0)..(2, 9, 0))]);
+    index.add_deps("b", (1, 3, 0), &[("c", (1, 1, 0)..(1, 1, 1))]);
+    index.add_deps("b", (2, 7, 0), &[("d", (3, 1, 0)..(3, 1, 1))]);
+    index.add_deps::<R>("c", (1, 1, 0), &[]);
+    index.add_deps::<R>("d", (3, 1, 0), &[]);
+    assert_map_eq(
+        &resolve(&index, "a#1", (1, 4, 0)).unwrap(),
+        &select(&[("a#1", (1, 4, 0)), ("b#2", (2, 7, 0)), ("d#3", (3, 1, 0))]),
+    );
+}
+```
