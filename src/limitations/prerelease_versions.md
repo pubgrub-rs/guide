@@ -23,7 +23,7 @@ And this is one of the fundamental mechanisms of the algorithm, so we should not
 
 ## Playing again with packages?
 
-In the light of the "bucket" and "proxis" scheme we introduced in the section about allowing multiple versions per package, I'm wondering if we could do something similar for pre-releases.
+In the light of the "bucket" and "proxies" scheme we introduced in the section about allowing multiple versions per package, I'm wondering if we could do something similar for pre-releases.
 Normal versions and pre-release versions would be split into two subsets, each attached to a different bucket.
 This is probably not going to work because of places in the algorithm where intersections of ranges are computed.
 In those places, only one of the two buckets will have the intersection applied.
