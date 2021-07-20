@@ -12,7 +12,7 @@ The fact that packages are uniquely identified (1) is perhaps the only constrain
 But for the rest of the constraints, they are all inadequate for some common real-world dependency systems.
 For example, it's possible to have dependency systems where order is not required for versions (2).
 In such systems, dependencies must be specified with exact sets of compatible versions, and bounded ranges make no sense.
-Being able to uniquely define the successor of any version (3) is also a constraint that is not respected if versions have a system of pre-releases.
+Being able to uniquely define the successor of any version (3) is also a constraint that is not a natural fit if versions have a system of pre-releases.
 Indeed, what is the successor of `2.0.0-alpha`?
 We can't tell if that is `2.0.0` or `2.0.0-beta` or `2.0.0-whatever`.
 Having fixed dependencies (4) is also not followed in programming languages allowing optional dependencies.
