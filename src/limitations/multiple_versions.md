@@ -1,7 +1,7 @@
 # Allowing multiple versions of a package
 
 One of the main goals of PubGrub is to pick one version per package depended on, under the assumption that at most one version per package is allowed.
-This assumption has two advantages.
+Enforcing this assumption has two advantages.
 First, it prevents data and functions interactions of the same library at different, potentially incompatible versions.
 Second, it reduces the code size and therefore also the disk usage and the compilation times.
 
@@ -11,7 +11,7 @@ With the default rules of PubGrub, that system has no solution and we cannot bui
 Yet, if our usages of "b" and "c" are independant with regard to "d", we could in theory build "b" with "d" @ 1 and build "c" with "d" @ 2.
 
 Such situation is sufficiently common that most package managers allow multiple versions of a package.
-In rust for example, multiple versions are allowed as long as they cross a major frontier, so 0.7 and 0.8 or 2.0 and 3.0.
+In Rust for example, multiple versions are allowed as long as they cross a major frontier, so 0.7 and 0.8 or 2.0 and 3.0.
 So the question now is can we circumvent this fundamental restriction of PubGrub?
 The short answer is yes, with buckets and proxis.
 
@@ -19,13 +19,13 @@ The short answer is yes, with buckets and proxis.
 
 We saw that implementing optional dependencies required the creation of on-demand feature packages, which are virtual packages created for each optional feature.
 In order to allow for multiple versions of the same package to coexist, we are also going to play smart with packages.
-Indeed, if we want two versions to coexist, there is only one possibility, which is that they are from different packages.
+Indeed, if we want two versions to coexist, there is only one possibility, which is that they come from different packages.
 And so we introduce the concept of buckets.
 A package bucket is a set of versions of the same package that cannot coexist in the solution of a dependency system, basically just like before.
-So for rust crates, we can define one bucket per major frontier, such as one bucket for 0.1, one for 0.2, ..., one for 1.0, one for 2.0, etc.
+So for Rust crates, we can define one bucket per major frontier, such as one bucket for 0.1, one for 0.2, ..., one for 1.0, one for 2.0, etc.
 As such, versions 0.7.0 and 0.7.3 would be in the same bucket, but 0.7.0 and 0.8.0 would be in different buckets and could coexist.
 
-Are buckets enought? Not quite, because once we introduce buckets, we need a way to depend on multiple buckets alternatively.
+Are buckets enought? Not quite, since once we introduce buckets, we also need a way to depend on multiple buckets alternatively.
 Indeed, most packages should have dependencies on a single bucket, because it doesn't make sense to depend on potentially incompatible versions at the same time.
 But rarely, dependencies are written such that they can depend on multiple buckets, such as if one write `v >= 2.0`.
 Then, any version from the 2.0 bucket would satisfy it, as well as any version from the 3.0 or any other later bucket.
@@ -44,15 +44,24 @@ And since our package "a" depends on any version of the proxi package "a->b", it
 
 ## Example
 
-We will consider versions in the form `Major.minor` with a major component starting at 1, and a minor component starting at 0.
+We will consider versions in the form `major.minor` with a major component starting at 1, and a minor component starting at 0.
 The smallest version is 1.0, and each major component represents a bucket.
+
+> Note that we could start versions at 0.0, but since different dependency system tends to interpret versions before 1.0 differently, we will simply avoid that problem by saying versions start at 1.0.
+
 For convenience, we will use a string notation for proxis and buckets.
 Buckets will be indicated by a "#", so "a#1" is the 1.0 bucket of package "a", and "a#2" is the 2.0 bucket of package "a".
 And we will use "@" to denote exact versions, so "a" @ 1.0 means package "a" at version 1.0.
-Proxis will be represented by the arrow "->" as explained before.
+Proxis will be represented by the arrow "->" as previously mentioned.
 Since a proxi is tied to a specific version of the initial package, we also use the "@" symbol in the name of the proxi package.
 For example, if "a" @ 1.4 depends on "b", we create the proxi package "a#1@1.4->b".
 It's a bit of a mouthful, but once you learn how to read it, it makes sense.
+
+> Note that we might be tempted to just remove the version part of the proxy, so "a#1->b" instead of "a#1@1.4->b".
+> However, we might have "a" @ 1.4 depending on "b" in range `v >= 2.2` and have "a" @ 1.5 depending on "b" in range `v >= 2.6`.
+> Both dependencies would map to the same "a#1->b" proxy package, but we would not know what to put in the dependency of "a#1->b" to the "b#2" bucket.
+> Should it be "2.2 <= v < 3.0" as in "a" @ 1.4, or should it be "2.6 <= v < 3.0" as in "a" @ 1.5?
+> That is why each proxy package is tied to an exact version of the source package.
 
 Let's consider the following example, with "a" being our root package.
 - "a" @ 1.4 depends on "b" in range `1.1 <= v < 2.9`
@@ -67,17 +76,18 @@ Using buckets and proxis, we can rewrite this dependency system as follows.
 - "b#1" @ 1.3 depends on "c#1" at version `1.1`.
 - "b#2" @ 2.7 depends on "d#3" at version `3.1`.
 
-There are potentially two solutions to that system, the one with the newest versions is the following.
+There are potentially two solutions to that system.
+The one with the newest versions is the following.
 - "a#1" @ 1.4
 - "a#1@1.4->b" @ 2.0
 - "b#2" @ 2.7
 - "d#3" @ 3.1
 
-And if we want to express the solution in terms of the original packages, we just have to remove the proxi packages from the solution.
+Finally, if we want to express the solution in terms of the original packages, we just have to remove the proxi packages from the solution.
 
 ## Example implementation
 
-A complete example implementation of this extension allowing multiple versions is available in the [allow-multiple-versions crate of the advanced_dependency_providers repository][multiple-versions-crate].
+A complete example implementation of this extension allowing multiple versions is available in the [`allow-multiple-versions` crate of the `advanced_dependency_providers` repository][multiple-versions-crate].
 In that example, packages are of the type `String` and versions of the type `SemanticVersion` defined in pubgrub, which does not account for pre-releases, just the (Major, Minor, Patch) format of versions.
 
 [multiple-versions-crate]: https://github.com/pubgrub-rs/advanced_dependency_providers/tree/main/allow-multiple-versions
@@ -108,8 +118,8 @@ index.add_deps("a", (2, 0, 0), &[("b", (1, 0, 0)..)]);
 
 ### Implementing a dependency provider for the index
 
-Since our `Index` is ready, we now have to implement the `DependencyProvider` trait on it.
-As explained previously, we'll need to differenciate packages representing buckets and proxis, so we define this new `Package` type.
+Since our `Index` is ready, we now have to implement the `DependencyProvider` trait for it.
+As explained previously, we'll need to differenciate packages representing buckets and proxis, so we define the following new `Package` type.
 
 ```rust
 /// A package is either a bucket, or a proxi between a source and a target package.
