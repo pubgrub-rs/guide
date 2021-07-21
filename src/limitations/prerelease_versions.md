@@ -21,6 +21,10 @@ Those facts are called incompatibilities and more info about those is available 
 The problem is that if a fact recalls that there is no version within the `1.0.0 <= v < 2.0.0` range, backtracking to a situation where we ask for a version within `2.0.0-alpha <= v < 2.0.0` will return nothing even without checking if a pre-release exists in that range.
 And this is one of the fundamental mechanisms of the algorithm, so we should not try to alter it.
 
+Point (2) is probably the reason why some pubgrub implementations have issues dealing with pre-releases when backtracking, as can be seen in [an issue of the dart implementation][dart-prerelease-issue].
+
+[dart-prerelease-issue]: https://github.com/dart-lang/pub/pull/3038
+
 ## Playing again with packages?
 
 In the light of the "bucket" and "proxies" scheme we introduced in the section about allowing multiple versions per package, I'm wondering if we could do something similar for pre-releases.
