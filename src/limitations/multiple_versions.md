@@ -249,3 +249,5 @@ fn success_when_simple_version() {
     );
 }
 ```
+
+Implementing a dependency provider allowing both optional dependencies and multiple versions per package is left to the reader as an exercise (I've always wanted to say that).
