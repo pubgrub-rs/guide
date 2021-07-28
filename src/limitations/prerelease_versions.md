@@ -29,11 +29,20 @@ Point (2) is probably the reason why some pubgrub implementations have issues de
 
 In the light of the "bucket" and "proxies" scheme we introduced in the section about allowing multiple versions per package, I'm wondering if we could do something similar for pre-releases.
 Normal versions and pre-release versions would be split into two subsets, each attached to a different bucket.
-This is probably not going to work because of places in the algorithm where intersections of ranges are computed.
-In those places, only one of the two buckets will have the intersection applied.
-So if we intersect `2.0.0-alpha <= v < 2.0.0` with `2.0.0 <= v < 3.0.0`, we want the result to be empty, but with a bucket scheme, I fear that the pre-release bucket will not be concerned by the intersection and we will still have pre-releases within `2.0.0-alpha <= v < 2.0.0` as still valid.
+In order to make this work, we would need a way to express negative dependencies.
+For example, we would want to say: "a" depends on "b" within the (2.0, 3.0) range and is incompatible with any pre-release version of "b".
+The tool to express such dependencies is already available in the form of `Term` which can be a `Positive` range or a `Negative` one.
+We would have to adjust the API for the `get_dependencies` method to return terms instead of a ranges.
+This may have consequences on other parts of the algorithm and should be thoroughly tested.
 
-This is why we think pre-releases require a fundamental change in the API, with ranges of versions that can be multi-dimensional.
+One issue is that the proxy and bucket scheme would allow for having both a normal and a pre-release version of the same package in dependencies.
+We do not want that, so instead of proxy packages, we might have "frontend" packages.
+The difference being that a proxy links a source to a target, while a frontend does not care about the source, only the target.
+As such, only one frontend version can be selected, thus followed by either a normal version or a pre-release version but not both.
+
+Another issue would be that the proxy and bucket scheme breaks strategies depending on ordering of versions.
+Since we have two proxy versions, one targetting the normal bucket, and one targetting the pre-release bucket, a strategy aiming at the newest versions will lean towards normal or pre-release depending if the newest proxy version is the one for the normal or pre-release bucket.
+Mitigating this issue seems complicated, but hopefully, we are also exploring alternative API changes that could enable pre-releases.
 
 ## Multi-dimensional ranges
 
