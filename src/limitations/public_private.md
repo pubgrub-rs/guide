@@ -12,7 +12,7 @@ Concretely, let's say that we depend on two packages "a" and "b" and let's creat
 - "b" @ 2.0 depends on "c" at version 1.0
 - "c" @ 1.0 has no dependencies
 
-Without buckets, there is no solution because "a" depends on "b" at version 2.0 and our root package depends on "b" at version 1.0.
+Without buckets, there is no solution because "a" depends on "b" at version 1.0 and our root package depends on "b" at version 2.0.
 If we introduce buckets with boundaries at major versions, we have a solution since "a#1" depends on bucket "b#1" while we depend on bucket "b#2" and one version can be picked in each bucket.
 
 But, what if package "a" @ 1.0 re-exports in it's public interface a type coming from its dependency "b" @ 1.0?
