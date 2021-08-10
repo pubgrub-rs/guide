@@ -3,70 +3,114 @@
 We just saw in the previous section that it was possible to have multiple versions of the same package, as long as we create independant virtual packages called buckets.
 Oftentimes, creating buckets with fixed version boundaries and which are shared among the whole dependency system can cause versions mismatches in dependency chains.
 This is for example the case with a chain of packages publicly re-exporting types of their dependencies and interacting with each other.
-Concretely, let's say that we depend on two packages "a" and "b" and let's create a conflictual situation.
+Concretely, let's say that we depend on two packages "a" and "b", with "a" also depending on "b" but at a different version.
 
-- "root" depends on "a" at any version
-- "root" depends on "b" at version 2.0
-- "a" @ 1.0 depends on "b" at version 1.0
-- "b" @ 1.0 has no dependencies
-- "b" @ 2.0 depends on "c" at version 1.0
-- "c" @ 1.0 has no dependencies
+- "root" depends on "a" @ 1
+- "root" depends on "b" @ 1
+- "a" @ 1 depends on "b" @ 2
 
-Without buckets, there is no solution because "a" depends on "b" at version 1.0 and our root package depends on "b" at version 2.0.
-If we introduce buckets with boundaries at major versions, we have a solution since "a#1" depends on bucket "b#1" while we depend on bucket "b#2" and one version can be picked in each bucket.
+Without buckets, there is no solution since "b" is depended on at two different versions.
+If we introduce buckets with boundaries at major versions, we have a solution since "root" depends on "b#1" while "a#1" depends on bucket "b#2".
 
-But, what if package "a" @ 1.0 re-exports in it's public interface a type coming from its dependency "b" @ 1.0?
-If we feed a function of "a" with a type from "b" @ 2.0, compilation will fail, complaining about the argument being of the wrong type.
-Currently in the rust compiler, this create cryptic error messages of the kind "Expected type T, found type T" where "T" is exactly the same thing.
+But, what if package "a" re-exports in it's public interface a type coming from its "b" dependency?
+If we feed a function of "a" with a type from "b#1", compilation will fail, complaining about the argument being of the wrong type.
+Currently in the rust compiler, this creates cryptic error messages of the kind "Expected type T, found type T", where "T" is exactly the same thing.
 Of course, those compiler errors should be improved, but there is a way of preventing that situation entirely at the time of solving dependencies instead of at compilation time.
 We can call that the public/private scheme.
-In consists in marking dependencies with re-exported types as "public", while other dependencies are considered "private".
+It consists in marking dependencies with re-exported types as "public", while other dependencies are considered "private" since they don't leak the types of their dependencies.
 So instead of saying that "a" depends on "b", we say that "a" publicly depends on "b".
-Therefore public dependencies must be unique even across buckets.
+Therefore public dependencies must be unique even across multiple major versions.
 
 Note that there is one inconvenience though, which is that we could reject too early situations that the compiler would have accepted to compile.
 Indeed, it's not because "a" has public types of "b" exposed that we are necessarily using them!
-
 Now let's detail a bit more the public/private scheme and how it could be implemented with PubGrub.
 
 ## Public subgraph
 
-As we explained above, two versions of a package can only conflict with each other if they interact through a chain of publicly connected dependencies.
+Two versions of a package can only conflict with each other if they interact through a chain of publicly connected dependencies.
 This means that any private dependency can cut the chain of public dependencies.
-In turn, the dependencies of a private dependency "p" are guaranteed to be independant (usage wise) of the rest of the dependency graph above package "p".
-This means that there is not one list of public packages, but multiple subgraphs of public packages, which start either at the root, or at a private dependency within the dependency graph.
+If "a" privately depends on "b", dependencies of "b" are guaranteed to be independant (usage wise) of the rest of the dependency graph above package "a".
+This means that there is not one list of public packages, but rather multiple subgraphs of publicly connected packages, which start either at the root, or at a private dependency frontier.
 And in each public subgraph, there can only be one version of each package.
 
-## Private seeds
+## Seed markers
 
-We already use the "root" term to designate our root package, so let's call the private root of every public subgraph a "seed" and note it with a dollar sign "\$".
-If we say that package "a" has a public dependency to package "b" we can use the same seed for packages "a" and "b" in that subgraph.
-The previous example thus becomes the following system.
+Since dependencies form a directed graph, each public subgraph can be uniquely identified by a root package, that we will call the "seed" of the public subgraph.
+This "seed" is in fact the source package of a private dependency link, and all publicly connected packages following the target package of the private dependency link can be marked with that seed.
+The diagram below provides a visual example of dependency graphs where seed markers are annotated next to each package.
 
-- "root" depends on "a\$root" at any version (use "root" for the seed)
-- "root" depends on "b\$root" at version 2.0 (use "root" for the seed)
-- "a\$root" @ 1.0 depends on "b\$root" at version 1.0 (same seed since public dependency)
-- "b\$root" @ 1.0 has no dependencies
-- "b\$root" @ 2.0 depends on "c\$b@2.0" at version 1.0 (use "b" @ 2.0 for the seed)
-- "c\$b@2.0" @ 1.0 has no dependencies
+<div style="text-align:center"><img src="/img/private-seed.svg" /></div>
 
-With the above system, there is no solution since the package "b\$root" is required both at version 1.0 and version 2.0.
-However, if we now say that "a" has a private dependency to "b" then it is different.
+In fact, as soon as there is one private dependency, all branches under the source package must be marked with the seed marker of the source package.
+This is because all branches contain code that is used by the source package.
+As a result, the number of seed markers along a public dependency chain grows with the number of branches with private dependencies, as visible in the diagram below.
 
-- "root" depends on "a\$root" at any version (use "root" for the seed)
-- "root" depends on "b\$root" at version 2.0 (use "root" for the seed)
-- "a\$root" @ 1.0 depends on "b\$a@1.0" at version 1.0 (use "a" @ 1.0 for the seed)
-- "b\$a@1.0" @ 1.0 has no dependencies
-- "b\$root" @ 2.0 depends on "c\$b@2.0" at version 1.0 (use "b" @ 2.0 for the seed)
-- "c\$b@2.0" @ 1.0 has no dependencies
+<div style="text-align:center"><img src="/img/multiple-private-seed.svg" /></div>
 
-Then this has the following solution:
+## Example
 
-- "a\$root" at version 1.0
-- "b\$a@1.0" at version 1.0
-- "b\$root" at version 2.0
-- "c\$b@2.0" at version 1.0
+Let's consider the previous branching example where "b" is depended on both by our root package and by our dependency "a".
+If we note seed markers with a dollar symbol "\$" and use "r" for the root package, that example can be adapted to the following system.
+
+- "r" depends on "a\$r" @ 1
+- "r" depends on "b\$r" @ 1
+- "a\$r" @ 1 depends privately on "b\$a@1" @ 2
+
+Seed markers must correspond to an exact package version because multiple versions of a given package will have different dependency graphs, and we don't want to wrongly assume that all subgraphs are the same for all versions.
+Here, since "a" depends privately on "b", "b" is marked with the seed "\$a@1".
+Thus, this system has the following solution.
+
+- "a\$r" @ 1
+- "b\$r" @ 1
+- "b\$a@1" @ 2
+
+If instead of a private dependency, "a" had a public dependency on "b", there would be no new seed marker and it would read:
+
+- "a\$r" @ 1 depends publicly on "b\$r" @ 2
+
+Leading to no solution, since the package "b\$r" is now required both at version 1 and 2.
 
 ## Example implementation
+
+The seed markers scheme presented above can easily be implemented with pubgrub by keeping seed markers together with package names in the `Package` type involved in the `DependencyProvider`.
+A complete example implementation of this extension allowing public and private dependencies is available in the [`public-private` crate of the `advanced_dependency_providers` repository][public-private-crate].
+In that example, packages are of the type `String` and versions of the type `SemanticVersion` defined in pubgrub, which does not account for pre-releases, just the (Major, Minor, Patch) format of versions.
+
+[public-private-crate]: https://github.com/pubgrub-rs/advanced_dependency_providers/tree/main/public-private
+
+### Defining an index of packages
+
+Inside the `index.rs` module, we define a very basic `Index`, holding all packages known, as well as a helper function `add_deps` easing the writing of tests.
+
+```rust
+/// Each package is identified by its name.
+pub type PackageName = String;
+/// Alias for dependencies.
+pub type Deps = Map<PackageName, (Privacy, Range<SemVer>)>;
+/// Privacy indicates if a dependency is public or private.
+pub enum Privacy { Public, Private }
+
+/// Global registry of known packages.
+pub struct Index {
+    /// Specify dependencies of each package version.
+    pub packages: Map<PackageName, BTreeMap<SemVer, Deps>>,
+}
+
+// Initialize an empty index.
+let mut index = Index::new();
+// Add package "a" to the index at version 1.0.0 with no dependency.
+index.add_deps::<R>("a", (1, 0, 0), &[]);
+// Add package "a" to the index at version 2.0.0 with a private dependency to "b" at versions >= 1.0.0.
+index.add_deps("a", (2, 0, 0), &[("b", Private, (1, 0, 0)..)]);
+// Add package "a" to the index at version 3.0.0 with a public dependency to "b" at versions >= 1.0.0.
+index.add_deps("a", (3, 0, 0), &[("b", Public, (1, 0, 0)..)]);
+```
+
+### Implementing a dependency provider for the index
+
+Since our `Index` is ready, we now have to implement the `DependencyProvider` trait for it.
+As explained previously, we need to identify to which public subgraph a given dependency belongs to.
+That is why each package also holds a seed, which is an identifier of the package just before the private dependency initiating the public subgraph.
+Thanks to that seed, we guarantee that there can only be one version of each package per public subgraph.
 
 TODO
