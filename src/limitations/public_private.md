@@ -17,11 +17,11 @@ If we feed a function of "a" with a type from "b#1", compilation will fail, comp
 Currently in the rust compiler, this creates cryptic error messages of the kind "Expected type T, found type T", where "T" is exactly the same thing.
 Of course, those compiler errors should be improved, but there is a way of preventing that situation entirely at the time of solving dependencies instead of at compilation time.
 We can call that the public/private scheme.
-It consists in marking dependencies with re-exported types as "public", while other dependencies are considered "private" since they don't leak the types of their dependencies.
+It consists in marking dependencies with re-exported types as "public", while other dependencies are considered "private" since they don't leak their types.
 So instead of saying that "a" depends on "b", we say that "a" publicly depends on "b".
 Therefore public dependencies must be unique even across multiple major versions.
 
-Note that there is one inconvenience though, which is that we could reject too early situations that the compiler would have accepted to compile.
+Note that there is one inconvenience though, which is that we could have false positives, i.e. reject situations that the compiler would have accepted to compile.
 Indeed, it's not because "a" has public types of "b" exposed that we are necessarily using them!
 Now let's detail a bit more the public/private scheme and how it could be implemented with PubGrub.
 
@@ -50,25 +50,25 @@ As a result, the number of seed markers along a public dependency chain grows wi
 ## Example
 
 Let's consider the previous branching example where "b" is depended on both by our root package and by our dependency "a".
-If we note seed markers with a dollar symbol "\$" and use "r" for the root package, that example can be adapted to the following system.
+If we note seed markers with a dollar symbol "\$" that example can be adapted to the following system.
 
-- "r" depends on "a\$r" @ 1
-- "r" depends on "b\$r" @ 1
-- "a\$r" @ 1 depends privately on "b\$a@1" @ 2
+- "root" depends on "a\$root" @ 1
+- "root" depends on "b\$root" @ 1
+- "a\$root" @ 1 depends privately on "b\$a@1" @ 2
 
 Seed markers must correspond to an exact package version because multiple versions of a given package will have different dependency graphs, and we don't want to wrongly assume that all subgraphs are the same for all versions.
 Here, since "a" depends privately on "b", "b" is marked with the seed "\$a@1".
 Thus, this system has the following solution.
 
-- "a\$r" @ 1
-- "b\$r" @ 1
+- "a\$root" @ 1
+- "b\$root" @ 1
 - "b\$a@1" @ 2
 
 If instead of a private dependency, "a" had a public dependency on "b", there would be no new seed marker and it would read:
 
-- "a\$r" @ 1 depends publicly on "b\$r" @ 2
+- "a\$root" @ 1 depends publicly on "b\$root" @ 2
 
-Leading to no solution, since the package "b\$r" is now required both at version 1 and 2.
+Leading to no solution, since the package "b\$root" is now required both at version 1 and 2.
 
 ## Example implementation
 
