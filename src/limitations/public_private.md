@@ -160,17 +160,19 @@ fn get_dependencies(&self, package: &Package, version: &SemVer)
         // - one Constraint variant per seed marker
         // - one Markers variant per original dependency
         PkgSeeds::Markers { seed_markers, pkgs } => {
+            // Seed constraints, one per seed for this package@version.
             let seed_constraints = ...;
             // Figure out if there are are private dependencies.
             let has_private = ...;
-            // Chain the seed constraints with actual dependencies.
             Ok(Dependencies::Known(
+                // Chain the seed constraints with actual dependencies.
                 seed_constraints
                     .chain(index_deps.iter().map(|(p, (privacy, r))| {
                         let seeds = if privacy == &Privacy::Private {
                             // make a singleton seed package
                         } else if has_private {
-                            // add the current package to the seed markers
+                            // this is public but there is also a private dep,
+                            // so add the source package to the seed markers
                         } else {
                             // simply reuse the parent seed markers
                         };
