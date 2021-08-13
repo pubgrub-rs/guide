@@ -113,4 +113,72 @@ As explained previously, we need to identify to which public subgraph a given de
 That is why each package also holds a seed, which is an identifier of the package just before the private dependency initiating the public subgraph.
 Thanks to that seed, we guarantee that there can only be one version of each package per public subgraph.
 
-TODO
+```rust
+/// A package is identified by its name and by the public subgraphs
+/// it belongs to, themselves identified by "seeds".
+pub struct Package {
+    name: String,
+    seeds: PkgSeeds,
+}
+
+/// Each public subgraph is identified by a seed,
+/// and some packages belong to multiple public subgraphs
+/// and can thus have multiple seed markers.
+/// Since we also need to have a unique hash per package, per public subgraph,
+/// Each `Markers` variant of a package will also have a dependency on
+/// one `Constraint` variant per seed, resulting in one unique identifier
+/// per public subgraph that PubGrub can use to check constraints on versions.
+pub enum PkgSeeds {
+    Constraint(Seed),
+    Markers {
+        seed_markers: Set<Seed>,
+        pkgs: Set<String>,
+    },
+}
+
+/// A seed is the identifier associated with the private package
+/// at the origin of a public subgraph.
+pub struct Seed {
+    /// Seed package identifier
+    pub name: String,
+    /// Seed version identifier
+    pub version: SemVer,
+}
+```
+
+Implementing `choose_package_version` is trivial if we simply use the function `choose_package_with_fewest_versions` provided by pubgrub.
+Implementing `get_dependencies` is slightly more complicated.
+Have a look at the complete implementation if needed, the main ideas are the following.
+
+```rust
+fn get_dependencies(&self, package: &Package, version: &SemVer)
+-> Result<Dependencies<Package, SemVer>, ...> {
+    match &package.seeds {
+        // A Constraint variant does not have any dependencies
+        PkgSeeds::Constraint(_) => Ok(Dependencies::Known(Map::default())),
+        // A Markers variant has dependencies to:
+        // - one Constraint variant per seed marker
+        // - one Markers variant per original dependency
+        PkgSeeds::Markers { seed_markers, pkgs } => {
+            let seed_constraints = ...;
+            // Figure out if there are are private dependencies.
+            let has_private = ...;
+            // Chain the seed constraints with actual dependencies.
+            Ok(Dependencies::Known(
+                seed_constraints
+                    .chain(index_deps.iter().map(|(p, (privacy, r))| {
+                        let seeds = if privacy == &Privacy::Private {
+                            // make a singleton seed package
+                        } else if has_private {
+                            // add the current package to the seed markers
+                        } else {
+                            // simply reuse the parent seed markers
+                        };
+                        ( Package { name: p, seeds }, r )
+                    }))
+                    .collect(),
+            ))
+        }
+    }
+}
+```
