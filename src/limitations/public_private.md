@@ -39,13 +39,13 @@ Since dependencies form a directed graph, each public subgraph can be uniquely i
 This "seed" is in fact the source package of a private dependency link, and all publicly connected packages following the target package of the private dependency link can be marked with that seed.
 The diagram below provides a visual example of dependency graphs where seed markers are annotated next to each package.
 
-<div style="text-align:center"><img src="/img/private-seed.svg" /></div>
+<div style="text-align:center"><img src="../img/private-seed.svg" /></div>
 
 In fact, as soon as there is one private dependency, all branches under the source package must be marked with the seed marker of the source package.
 This is because all branches contain code that is used by the source package.
 As a result, the number of seed markers along a public dependency chain grows with the number of branches with private dependencies, as visible in the diagram below.
 
-<div style="text-align:center"><img src="/img/multiple-private-seed.svg" /></div>
+<div style="text-align:center"><img src="../img/multiple-private-seed.svg" /></div>
 
 ## Example
 
