@@ -37,13 +37,15 @@ And in each public subgraph, there can only be one version of each package.
 
 Since dependencies form a directed graph, each public subgraph can be uniquely identified by a root package, that we will call the "seed" of the public subgraph.
 This "seed" is in fact the source package of a private dependency link, and all publicly connected packages following the target package of the private dependency link can be marked with that seed.
+In addition, all packages behind a private link can only be accessed by the source package of that private dependency, so all seed markers existing previous to the private link can be cleared, leaving only seed marker of the source package.
 The diagram below provides a visual example of dependency graphs where seed markers are annotated next to each package.
 
 <div style="text-align:center"><img src="../img/private-seed.svg" /></div>
 
-In fact, as soon as there is one private dependency, all branches under the source package must be marked with the seed marker of the source package.
+In fact, as soon as a package has at least one private dependency, all dependency branches must be marked with the seed marker of the source package.
 This is because all branches contain code that is used by the source package.
-As a result, the number of seed markers along a public dependency chain grows with the number of branches with private dependencies, as visible in the diagram below.
+As a result, if a package has both a private dependency and a public dependency, the public dependency will inherit all markers of the source package plus a new seed marker for the source package itself.
+Therefore, the number of seed markers along a public dependency chain grows with the number of branches that also contain private dependencies, as visible in the diagram below.
 
 <div style="text-align:center"><img src="../img/multiple-private-seed.svg" /></div>
 
