@@ -12,7 +12,7 @@ Concretely, let's say that we depend on two packages "a" and "b", with "a" also 
 Without buckets, there is no solution since "b" is depended on at two different versions.
 If we introduce buckets with boundaries at major versions, we have a solution since "root" depends on "b#1" while "a#1" depends on bucket "b#2".
 
-But, what if package "a" re-exports in it's public interface a type coming from its "b" dependency?
+But, what if package "a" re-exports in its public interface a type coming from its "b" dependency?
 If we feed a function of "a" with a type from "b#1", compilation will fail, complaining about the argument being of the wrong type.
 Currently in the rust compiler, this creates cryptic error messages of the kind "Expected type T, found type T", where "T" is exactly the same thing.
 Of course, those compiler errors should be improved, but there is a way of preventing that situation entirely at the time of solving dependencies instead of at compilation time.
