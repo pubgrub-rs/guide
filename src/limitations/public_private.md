@@ -132,6 +132,11 @@ pub struct Package {
 /// Each `Markers` variant of a package will also have a dependency on
 /// one `Constraint` variant per seed, resulting in one unique identifier
 /// per public subgraph that PubGrub can use to check constraints on versions.
+///
+/// Remark: `Markers.pkgs` is just an implementation detail to prevent cycles
+/// with seeds of different versions and same package,
+/// which is impossible since we cannot pick two different versions
+/// of the same package in the same public subgraph.
 pub enum PkgSeeds {
     Constraint(Seed),
     Markers {
