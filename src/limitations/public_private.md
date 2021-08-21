@@ -111,9 +111,11 @@ index.add_deps("a", (3, 0, 0), &[("b", Public, (1, 0, 0)..)]);
 ### Implementing a dependency provider for the index
 
 Since our `Index` is ready, we now have to implement the `DependencyProvider` trait for it.
-As explained previously, we need to identify to which public subgraph a given dependency belongs to.
-That is why each package also holds a seed, which is an identifier of the package just before the private dependency initiating the public subgraph.
-Thanks to that seed, we guarantee that there can only be one version of each package per public subgraph.
+As explained previously, we need to identify which public subgraphs a given dependency belongs to.
+That is why each package also holds seed markers, which are the identifiers of the "seed" packages at the origin of each public subgraph this package belongs to.
+Since we need a unique hash for each package for each seed, and there can be multiple seed markers, the `PkgSeeds` type is actually an enum where a `Markers` variant will have exactly one dependency to a `Constraint` variant per seed listed in its markers, in addition to the dependencies registered in the index.
+And as its name suggests, the `Constraint` variant of a `PkgSeeds` package is only there to make sure that the "1-version-per-seed" constraint is satisfied and does not have any dependency.
+Thanks to that, we guarantee that there can only be one version of each package per public subgraph.
 
 ```rust
 /// A package is identified by its name and by the public subgraphs
