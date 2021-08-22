@@ -193,17 +193,3 @@ fn get_dependencies(&self, package: &Package, version: &SemVer)
     }
 }
 ```
-
-## Additionnal remarks
-
-It is possible to combine the public/private scheme with others presented before.
-For example, if we want to ensure that packages are compiled at most once per major version, we'd need to add two constraints.
-
-1. A bucket constraint to prevent from having more than one version per bucket.
-   This can easily be enforced by adding a dependency to a bucket version for each `Constraint` variant.
-2. A dependency to a unique package even accross different seeds.
-
-Constraint (2) rises from the fact that the bucket constraint does not prevent a package from being compiled twice, at the same version, but with different dependencies in two independant public subgraphs.
-One way to prevent it, would be for example to create a virtual package for each package version, that would exist in one version per globally existing seed marker.
-Each constraint variant would depend on that virtual package, at the exact version corresponding to its seed marker.
-Therefore, this would prevent duplicates, and combined with (1), would only allow multiple compilations of a package for different major versions.
