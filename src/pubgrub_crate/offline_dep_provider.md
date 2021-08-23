@@ -23,11 +23,11 @@ let mut dependency_provider = OfflineDependencyProvider::<&str, NumberVersion>::
 
 // Add all known dependencies.
 dependency_provider.add_dependencies(
-    "user_interface", 1, vec![("menu", Range::any()), ("icons", Range::any())],
+    "user_interface", 1, [("menu", Range::any()), ("icons", Range::any())],
 );
-dependency_provider.add_dependencies("menu", 1, vec![("dropdown", Range::any())]);
-dependency_provider.add_dependencies("dropdown", 1, vec![("icons", Range::any())]);
-dependency_provider.add_dependencies("icons", 1, vec![]);
+dependency_provider.add_dependencies("menu", 1, [("dropdown", Range::any())]);
+dependency_provider.add_dependencies("dropdown", 1, [("icons", Range::any())]);
+dependency_provider.add_dependencies("icons", 1, []);
 
 // Run the algorithm.
 let solution = resolve(&dependency_provider, "user_interface", 1).unwrap();
