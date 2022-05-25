@@ -8,6 +8,8 @@
   - [Strategical decision making in a DependencyProvider](./pubgrub_crate/strategy.md)
   - [Solution and error reporting](./pubgrub_crate/solution.md)
   - [Writing your own error reporting logic](./pubgrub_crate/custom_report.md)
+- [Upgrading from a previous version](./upgrades/intro.md)
+  - [Upgrading from v0.2 to v0.3](./upgrades/v02_v03.md)
 - [Advanced usage and limitations](./limitations/intro.md)
   - [Optional dependencies](./limitations/optional_deps.md)
   - [Allowing multiple versions of a package](./limitations/multiple_versions.md)
