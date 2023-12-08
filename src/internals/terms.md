@@ -24,6 +24,7 @@ In this guide, for any given range \\(r\\),
 we will note \\([r]\\) its associated positive term,
 and \\(\neg [r]\\) its associated negative term.
 And for any term \\(T\\), we will note \\(\overline{T}\\) the negation of that term.
+(\\( \neg A \\) and \\( \overline{A} \\) are different notations for the same thing.)
 Therefore we have the following rules,
 
 \\[\begin{eqnarray}
@@ -58,7 +59,10 @@ based on those ranges is defined as follows,
 \neg [r_1] \land \neg [r_2] &=& \neg [r_1 \cup r_2].  \nonumber \\\\
 \end{eqnarray}\\]
 
-And for any two terms \\(T_1\\) and \\(T_2\\), their union and intersection are related by
+In rust terms, "\\( \neg \\)" means "not"/`!` (\\( \neg T \\),
+"\\( \land \\)" means "and"/, "\\( \lor \\)" means "or"/`||`.
+
+And for any two terms \\(T_1\\) and \\(T_2\\), their union and intersection are related by De Morgan's laws
 
 \\[ \overline{T_1 \lor T_2} = \overline{T_1} \land \overline{T_1}. \\]
 
