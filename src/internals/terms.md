@@ -1,11 +1,14 @@
 # Terms
 
+Dependency solving involves handling sets of packages and versions with precision and logic.
+We thus also need precision in our notations.
 
 ## Definition
 
-A term is an atomic variable, called ["literal"][literal] in mathematical logic,
-that is evaluated either true or false depending on the evaluation context.
-In PubGrub, a term is either a positive or a negative range of versions defined as follows.
+For any given package, we describe a set of possible versions as a **range**.
+For example, a range may correspond to a single version, the set of versions higher than 2 and lower than 5,
+the set containing every possible version or even the set containing no version at all.
+And once we have ranges, we can build **terms**, defined as either positive or negative ranges.
 
 ```rust
 pub enum Term<V> {
@@ -14,22 +17,40 @@ pub enum Term<V> {
 }
 ```
 
+A term is a [literal][literal] evaluated either true or false depending on the evaluation context.
 A positive term is evaluated true if and only if
 a version contained in its range was selected.
 A negative term is evaluated true if and only if
 a version not contained in its range was selected,
 or no version was selected.
-The `negate()` method transforms a positive term into a negative one and vice versa.
+
+> **Remark on negative terms:**
+>
+> A negative term is different than the positive one with its complement range.
+> Indeed, saying "a version was picked in the complement of this range",
+> is different than saying "**no version was picked or** a version was picked in the complement of this range".
+
 In this guide, for any given range \\(r\\),
 we will note \\([r]\\) its associated positive term,
 and \\(\neg [r]\\) its associated negative term.
-And for any term \\(T\\), we will note \\(\overline{T}\\) the negation of that term.
-Therefore we have the following rules,
+And for any term \\(T\\), whether positive or negative range, we will note \\(\overline{T}\\) the negation of that term,
+transforming a positive range into an negative one and vice versa.
+Therefore we have the following notation rules,
 
 \\[\begin{eqnarray}
 \overline{[r]} &=& \neg [r], \nonumber \\\\
 \overline{\neg [r]} &=& [r]. \nonumber \\\\
 \end{eqnarray}\\]
+
+> **Remark on notation:**
+>
+> To keep the notation precise, we only use the \\(\neg\\) symbol in front of ranges, such as \\(\neg[r]\\).
+> So we know when seeing it that we are talking about a negative term.
+> In contrast, we use the overline symbol generically, so we can't make the assumption
+> that the presence, or absence, of overline describes a positive or negative term.
+> So for a generic term \\(T\\), we will not write \\(\neg T\\), but \\(\overline{T}\\),
+> and for a range \\(r\\), we will not write \\(\neg \neg [r]\\), but \\(\overline{\neg [r]}\\)
+> which is also directly \\([r]\\).
 
 [literal]: https://en.wikipedia.org/wiki/Literal_(mathematical_logic)
 
@@ -54,11 +75,13 @@ based on those ranges is defined as follows,
 
 \\[\begin{eqnarray}
 [r_1] \land [r_2] &=& [r_1 \cap r_2],                 \nonumber \\\\
-[r_1] \land \neg [r_2] &=& [r_1 \cap \overline{r_2}], \nonumber \\\\
+[r_1] \land \neg [r_2] &=& [r_1 \cap complement(r_2)], \nonumber \\\\
 \neg [r_1] \land \neg [r_2] &=& \neg [r_1 \cup r_2].  \nonumber \\\\
 \end{eqnarray}\\]
 
-And for any two terms \\(T_1\\) and \\(T_2\\), their union and intersection are related by
+Where \\(\cap\\) and \\(\cup\\) are the notations for set intersections and unions of version ranges.
+
+For any two terms \\(T_1\\) and \\(T_2\\), their union and intersection are related by De Morgan's rule:
 
 \\[ \overline{T_1 \lor T_2} = \overline{T_1} \land \overline{T_1}. \\]
 
