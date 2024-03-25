@@ -59,8 +59,10 @@ based on those ranges is defined as follows,
 \neg [r_1] \land \neg [r_2] &=& \neg [r_1 \cup r_2].  \nonumber \\\\
 \end{eqnarray}\\]
 
-In rust terms, "\\( \neg \\)" means "not"/`!` (\\( \neg T \\),
-"\\( \land \\)" means "and"/, "\\( \lor \\)" means "or"/`||`.
+In rust terms,
+ * "\\( \neg T \\)" means "not T" or `!T`,
+ * "\\( X \land Y \\)" means "X and Y" or `X && Y`,
+ * "\\( X \lor Y \\)" means "X or Y" or `X || Y`.
 
 And for any two terms \\(T_1\\) and \\(T_2\\), their union and intersection are related by De Morgan's laws
 
