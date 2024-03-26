@@ -1,7 +1,11 @@
 # Terms
 
-Dependency solving involves handling sets of packages and versions with precision and logic.
-We thus also need precision in our notations.
+Dependency solving is a complex task where intuition may not be correct or scale to complex situations.
+We therefore anchor this task in sound mathematics and logic primitive.
+In turn, this demands precise notation and translations between
+the primitives of an application layer (`Cargo.toml`, `requirements.txt`, ...)
+and those of the underlying mathematics (CDCL, CDNL, ...).
+We introduce some of that notation here.
 
 ## Definition
 
