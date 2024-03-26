@@ -79,11 +79,12 @@ based on those ranges is defined as follows,
 
 \\[\begin{eqnarray}
 [r_1] \land [r_2] &=& [r_1 \cap r_2],                 \nonumber \\\\
-[r_1] \land \neg [r_2] &=& [r_1 \cap complement(r_2)], \nonumber \\\\
+[r_1] \land \neg [r_2] &=& [r_1 \cap r_2^C],          \nonumber \\\\
 \neg [r_1] \land \neg [r_2] &=& \neg [r_1 \cup r_2].  \nonumber \\\\
 \end{eqnarray}\\]
 
-Where \\(\cap\\) and \\(\cup\\) are the notations for set intersections and unions of version ranges.
+Where \\(\cap\\) and \\(\cup\\) are the notations for set intersections and unions of version ranges,
+and \\(r_2^C\\) is the complement set of the one defined by the range \\(r_2\\).
 
 For any two terms \\(T_1\\) and \\(T_2\\), their union and intersection are related by De Morgan's rule:
 
