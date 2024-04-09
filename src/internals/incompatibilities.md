@@ -89,28 +89,32 @@ With incompatibilities, we would note
 \Rightarrow \quad \\{ a: T_a, c: \overline{T_c} \\}. \\]
 
 This is the simplified version of the rule of resolution.
-For the generalization, let's reuse the "more mathematical" notation of conjunctions
-for incompatibilities \\( T_a \land T_b \\) and the above rule would be
+For the generalization, let's write them as [boolean expressions][boolean_expression].
 
-\\[               T_a \land \overline{T_b}, \quad
-                  T_b \land \overline{T_c}  \quad
-\Rightarrow \quad T_a \land \overline{T_c}. \\]
+\\[               \neg (T_a \land \overline{T_b}) \quad \land \quad
+                  \neg (T_b \land \overline{T_c}) \quad
+\Rightarrow \quad \neg (T_a \land \overline{T_c}). \\]
 
 In fact, the above rule can also be expressed as follows
 
-\\[               T_a \land \overline{T_b}, \quad
-                  T_b \land \overline{T_c}  \quad
-\Rightarrow \quad T_a \land (\overline{T_b} \lor T_b) \land \overline{T_c} \\]
+\\[               \neg (T_a \land \overline{T_b}) \quad \land \quad
+                  \neg (T_b \land \overline{T_c}) \quad
+\Rightarrow \quad \neg (T_a \land (\overline{T_b} \lor T_b) \land \overline{T_c}) \\]
 
 since for any term \\( T \\), the disjunction \\( T \lor \overline{T} \\) is always true.
-In general, for any two incompatibilities \\( T_a^1 \land T_b^1 \land \cdots \land T_z^1 \\)
-and \\( T_a^2 \land T_b^2 \land \cdots \land T_z^2 \\) we can deduce a third,
-called the resolvent whose expression is
+In general, for any two incompatibilities \\( \\{ a: T_a^1, \cdots, z: T_z^1 \\} \\) and
+\\(  \\{ a: T_a^2, \cdots, z: T_z^2 \\}, \\)
+or
 
-\\[ (T_a^1 \lor T_a^2) \land (T_b^1 \land T_b^2) \land \cdots \land (T_z^1 \land T_z^2). \\]
+\\[ \neg (T_a^1 \land T_b^1 \land \cdots \land T_z^1) \land  \neg (T_a^2 \land T_b^2 \land \cdots \land T_z^2), \\]
+we can deduce a third, called the resolvent whose expression is
+
+\\[ \neg ((T_a^1 \lor T_a^2) \land (T_b^1 \land T_b^2) \land \cdots \land (T_z^1 \land T_z^2)). \\]
 
 In that expression, only one pair of package terms is regrouped as a union (a disjunction),
 the others are all intersected (conjunction).
 If a term for a package does not exist in one incompatibility,
 it can safely be replaced by the term \\( \neg [\varnothing] \\) in the expression above
 as we have already explained before.
+
+[boolean_expression]: https://en.wikipedia.org/wiki/Boolean_expression#Boolean_operators
