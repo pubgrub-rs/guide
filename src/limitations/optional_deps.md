@@ -1,46 +1,59 @@
 # Optional dependencies
 
-Sometimes, we want the ability to express that some functionalities are optional.
-Since those functionalities may depend on other packages, we also want the ability to mark those dependencies optional.
+Sometimes, we want the ability to express that some functionalities are
+optional. Since those functionalities may depend on other packages, we also want
+the ability to mark those dependencies optional.
 
-Let's imagine a simple scenario in which we are developing package "A" and depending on package "B", itself depending on "C".
-Now "B" just added new functionalities, very convenient but also very heavy.
-For architectural reasons, they decided to release them as optional features of the same package instead of in a new package.
-To enable those features, one has to activate the "heavy" option of package "B", bringing a new dependency to package "H".
-We will mark optional features in dependencies with a slash separator "/".
-So we have now "A" depends on "B/heavy" instead of previously "A" depends on "B".
-And the complete dependency resolution is thus now ["A", "B/heavy", "C", "H"].
+Let's imagine a simple scenario in which we are developing package "A" and
+depending on package "B", itself depending on "C". Now "B" just added new
+functionalities, very convenient but also very heavy. For architectural reasons,
+they decided to release them as optional features of the same package instead of
+in a new package. To enable those features, one has to activate the "heavy"
+option of package "B", bringing a new dependency to package "H". We will mark
+optional features in dependencies with a slash separator "/". So we have now "A"
+depends on "B/heavy" instead of previously "A" depends on "B". And the complete
+dependency resolution is thus now ["A", "B/heavy", "C", "H"].
 
-But what happens if our package "A" start depending on another package "D", which depends on "B" without the "heavy" option?
-We would now have ["A", "B", "B/heavy", "C", "D", "H"].
-Is this problematic?
-Can we conciliate the fact that both "B" and "B/heavy" are in the dependencies?
+But what happens if our package "A" start depending on another package "D",
+which depends on "B" without the "heavy" option? We would now have ["A", "B",
+"B/heavy", "C", "D", "H"]. Is this problematic? Can we conciliate the fact that
+both "B" and "B/heavy" are in the dependencies?
 
 ## Strictly additive optional dependencies
 
-The most logical solution to this situation is to require that optional features and dependencies are strictly additive.
-Meaning "B/heavy" is entirely compatible with "B" and only brings new functions and dependencies.
-"B/heavy" cannot change dependencies of "B" only adding new ones.
-Once this hypothesis is valid for our dependency system, we can model "B/heavy" as a different package entirely, depending on both "B" and "H", leading to the solution ["A", "B", "B/heavy", "C", "D", "H"].
-Whatever new optional features that get added to "B" can similarly be modeled by a new package "B/new-feat", also depending on "B" and on its own new dependencies.
-When dependency resolution ends, we can gather all features of "B" that were added to the solution and compile "B" with those.
+The most logical solution to this situation is to require that optional features
+and dependencies are strictly additive. Meaning "B/heavy" is entirely compatible
+with "B" and only brings new functions and dependencies. "B/heavy" cannot change
+dependencies of "B" only adding new ones. Once this hypothesis is valid for our
+dependency system, we can model "B/heavy" as a different package entirely,
+depending on both "B" and "H", leading to the solution ["A", "B", "B/heavy",
+"C", "D", "H"]. Whatever new optional features that get added to "B" can
+similarly be modeled by a new package "B/new-feat", also depending on "B" and on
+its own new dependencies. When dependency resolution ends, we can gather all
+features of "B" that were added to the solution and compile "B" with those.
 
 ## Dealing with versions
 
-In the above example, we eluded versions and only talked about packages.
-Adding versions to the mix actually does not change anything, and solves the optional dependencies problem very elegantly.
-The key point is that an optional feature package, such as "B/heavy", would depend on its base package, "B", exactly at the same version.
-So if the "heavy" option of package "B" at version v = 3 brings a dependency to "H" at v >= 2, then we can model dependencies of "B/heavy" at v = 3 by ["B" @ v = 3, "H" @ v >= 2].
+In the above example, we eluded versions and only talked about packages. Adding
+versions to the mix actually does not change anything, and solves the optional
+dependencies problem very elegantly. The key point is that an optional feature
+package, such as "B/heavy", would depend on its base package, "B", exactly at
+the same version. So if the "heavy" option of package "B" at version v = 3
+brings a dependency to "H" at v >= 2, then we can model dependencies of
+"B/heavy" at v = 3 by ["B" @ v = 3, "H" @ v >= 2].
 
 ## Example implementation
 
-A complete example implementation is available in the [`optional-deps` crate of the `advanced_dependency_providers` repository][optional-deps-crate].
-Let's give an explanation of that implementation.
-For the sake of simplicity, we will consider packages of type `String` and versions of type `NumberVersion`, which is just a newtype around `u32` implementing the `Version` trait.
+A complete example implementation is available in the [`optional-deps` crate of
+the `advanced_dependency_providers` repository][optional-deps-crate]. Let's give
+an explanation of that implementation. For the sake of simplicity, we will
+consider packages of type `String` and versions of type `NumberVersion`, which
+is just a newtype around `u32` implementing the `Version` trait.
 
 ### Defining an index of packages
 
-We define an `Index`, storing all dependencies (`Deps`) of every package version in a double map, first indexed by package, then by version.
+We define an `Index`, storing all dependencies (`Deps`) of every package version
+in a double map, first indexed by package, then by version.
 
 ```rust
 // Use NumberVersion, which are simple u32 for the versions.
@@ -55,8 +68,9 @@ pub struct Index {
 }
 ```
 
-Dependencies listed in the `Index` include both mandatory and optional dependencies.
-Optional dependencies are identified, grouped, and gated by an option called a "feature".
+Dependencies listed in the `Index` include both mandatory and optional
+dependencies. Optional dependencies are identified, grouped, and gated by an
+option called a "feature".
 
 ```rust
 pub type Feature = String;
@@ -69,7 +83,8 @@ pub struct Deps {
 }
 ```
 
-Finally, each dependency is specified with a version range, and with a set of activated features.
+Finally, each dependency is specified with a version range, and with a set of
+activated features.
 
 ```rust
 pub struct Dep {
@@ -80,7 +95,8 @@ pub struct Dep {
 }
 ```
 
-For convenience, we added the `add_deps` and `add_feature` functions to help building an index in the tests.
+For convenience, we added the `add_deps` and `add_feature` functions to help
+building an index in the tests.
 
 ```rust
 let mut index = Index::new();
@@ -98,8 +114,9 @@ index.add_feature("d", 1, "feat", &[("f", 1.., &[])]);
 
 ### Implementing a dependency provider for the index
 
-Now that our `Index` is ready, let's implement the `DependencyProvider` trait on it.
-As we explained before, we'll need to differenciate optional features from base packages, so we define a new `Package` type.
+Now that our `Index` is ready, let's implement the `DependencyProvider` trait on
+it. As we explained before, we'll need to differenciate optional features from
+base packages, so we define a new `Package` type.
 
 ```rust
 /// A package is either a base package like "a",
@@ -110,10 +127,12 @@ pub enum Package {
 }
 ```
 
-Let's implement the first function required by a dependency provider, `choose_package_version`.
-For that we defined the `base_pkg()` method on a `Package` that returns the string of the base package.
-And we defined the `available_versions()` method on an `Index` to list existing versions of a given package.
-Then we simply called the `choose_package_with_fewest_versions` helper function provided by pubgrub.
+Let's implement the first function required by a dependency provider,
+`choose_package_version`. For that we defined the `base_pkg()` method on a
+`Package` that returns the string of the base package. And we defined the
+`available_versions()` method on an `Index` to list existing versions of a given
+package. Then we simply called the `choose_package_with_fewest_versions` helper
+function provided by pubgrub.
 
 ```rust
 fn choose_package_version<T: Borrow<Package>, U: Borrow<Range<Version>>>(
@@ -127,9 +146,10 @@ fn choose_package_version<T: Borrow<Package>, U: Borrow<Range<Version>>>(
 }
 ```
 
-This was very straightforward.
-Implementing the second function, `get_dependencies`, requires just a bit more work but is also quite easy.
-The exact complete version is available in the code, but again, for the sake of simplicity and readability, let's just deal with the happy path.
+This was very straightforward. Implementing the second function,
+`get_dependencies`, requires just a bit more work but is also quite easy. The
+exact complete version is available in the code, but again, for the sake of
+simplicity and readability, let's just deal with the happy path.
 
 ```rust
 fn get_dependencies(
@@ -160,9 +180,9 @@ fn get_dependencies(
 }
 ```
 
-Quite easy right?
-The helper function `from_deps` is where each dependency is transformed from its `String` form into its `Package` form.
-In pseudo-code (not compiling, but you get how it works) it looks like follows.
+Quite easy right? The helper function `from_deps` is where each dependency is
+transformed from its `String` form into its `Package` form. In pseudo-code (not
+compiling, but you get how it works) it looks like follows.
 
 ```rust
 /// Helper function to convert Index deps into what is expected by the dependency provider.
@@ -189,9 +209,9 @@ fn create_feature_deps(
 }
 ```
 
-We now have implemented the `DependencyProvider` trait.
-The only thing left is testing it with example dependencies.
-For that, we setup few helper functions and we wrote some tests, that you can run with a call to `cargo test --lib`.
+We now have implemented the `DependencyProvider` trait. The only thing left is
+testing it with example dependencies. For that, we setup few helper functions
+and we wrote some tests, that you can run with a call to `cargo test --lib`.
 Below is one of those tests.
 
 ```rust
@@ -217,4 +237,5 @@ fn success_when_multiple_features() {
 }
 ```
 
-[optional-deps-crate]: https://github.com/pubgrub-rs/advanced_dependency_providers/tree/main/optional-deps
+[optional-deps-crate]:
+  https://github.com/pubgrub-rs/advanced_dependency_providers/tree/main/optional-deps

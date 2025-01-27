@@ -1,12 +1,11 @@
 # Writing your own dependency provider
 
-The `OfflineDependencyProvider` is very useful for testing
-and playing with the API, but would not be usable in more complex
-settings like Cargo for example.
-In such cases, a dependency provider may need to retrieve
-package information from caches, from the disk or from network requests.
-Then, you might want to implement `DependencyProvider` for your own type.
-The `DependencyProvider` trait is defined as follows.
+The `OfflineDependencyProvider` is very useful for testing and playing with the
+API, but would not be usable in more complex settings like Cargo for example. In
+such cases, a dependency provider may need to retrieve package information from
+caches, from the disk or from network requests. Then, you might want to
+implement `DependencyProvider` for your own type. The `DependencyProvider` trait
+is defined as follows.
 
 ```rust
 /// Trait that allows the algorithm to retrieve available packages and their dependencies.
@@ -43,19 +42,17 @@ pub trait DependencyProvider<P: Package, V: Version> {
 }
 ```
 
-As you can see, implementing the `DependencyProvider` trait requires you
-to implement two functions, `choose_package_version` and `get_dependencies`.
-The first one, `choose_package_version` is called by the resolver when a new
-package has to be tried.
-At that point, the resolver call `choose_package_version` with a list
-of potential packages and their associated acceptable version ranges.
-It's then the role of the dependency retriever to pick a package
-and a suitable version in that range.
-The simplest decision strategy would be to just pick the first package,
-and first compatible version. Provided there exists a method
+As you can see, implementing the `DependencyProvider` trait requires you to
+implement two functions, `choose_package_version` and `get_dependencies`. The
+first one, `choose_package_version` is called by the resolver when a new package
+has to be tried. At that point, the resolver call `choose_package_version` with
+a list of potential packages and their associated acceptable version ranges.
+It's then the role of the dependency retriever to pick a package and a suitable
+version in that range. The simplest decision strategy would be to just pick the
+first package, and first compatible version. Provided there exists a method
 `fn available_versions(package: &P) -> impl Iterator<Item = &V>` for your type,
-it could be implemented as follows.
-We discuss advanced [decision making strategies later](./strategy.md).
+it could be implemented as follows. We discuss advanced
+[decision making strategies later](./strategy.md).
 
 ```rust
 fn choose_package_version<T: Borrow<P>, U: Borrow<Range<V>>>(
@@ -71,16 +68,13 @@ fn choose_package_version<T: Borrow<P>, U: Borrow<Range<V>>>(
 }
 ```
 
-The second required method is the `get_dependencies` method.
-For a given package version, this method should return
-the corresponding dependencies.
-Retrieving those dependencies may fail due to IO or other issues,
-and in such cases the function should return an error.
-Even if it does not fail, we want to distinguish the cases
-where the dependency provider does not know the answer
-and the cases where the package has no dependencies.
-For this reason, the return type in case of a success is the
-`Dependencies` enum, defined as follows.
+The second required method is the `get_dependencies` method. For a given package
+version, this method should return the corresponding dependencies. Retrieving
+those dependencies may fail due to IO or other issues, and in such cases the
+function should return an error. Even if it does not fail, we want to
+distinguish the cases where the dependency provider does not know the answer and
+the cases where the package has no dependencies. For this reason, the return
+type in case of a success is the `Dependencies` enum, defined as follows.
 
 ```rust
 pub enum Dependencies<P: Package, V: Version> {
@@ -91,12 +85,10 @@ pub enum Dependencies<P: Package, V: Version> {
 pub type DependencyConstraints<P, V> = Map<P, Range<V>>;
 ```
 
-Finally, there is an optional `should_cancel` method.
-As described in its documentation,
-this method is regularly called in the solver loop,
-and defaults to doing nothing.
-But if needed, you can override it to provide custom behavior,
-such as giving some feedback, or stopping early to prevent ddos.
-Any useful behavior would require mutability of `self`,
-and that is possible thanks to interior mutability.
-Read on the [next section](./caching.md) for more info on that!
+Finally, there is an optional `should_cancel` method. As described in its
+documentation, this method is regularly called in the solver loop, and defaults
+to doing nothing. But if needed, you can override it to provide custom behavior,
+such as giving some feedback, or stopping early to prevent ddos. Any useful
+behavior would require mutability of `self`, and that is possible thanks to
+interior mutability. Read on the [next section](./caching.md) for more info on
+that!
