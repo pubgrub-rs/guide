@@ -56,15 +56,13 @@ We define an `Index`, storing all dependencies (`Deps`) of every package version
 in a double map, first indexed by package, then by version.
 
 ```rust
-// Use NumberVersion, which are simple u32 for the versions.
-use pubgrub::version::NumberVersion as Version;
 /// Each package is identified by its name.
 pub type PackageName = String;
 
 /// Global registry of known packages.
 pub struct Index {
     /// Specify dependencies of each package version.
-    pub packages: Map<PackageName, BTreeMap<Version, Deps>>,
+    pub packages: Map<PackageName, BTreeMap<u32, Deps>>,
 }
 ```
 
@@ -127,22 +125,21 @@ pub enum Package {
 }
 ```
 
-Let's implement the first function required by a dependency provider,
-`choose_package_version`. For that we defined the `base_pkg()` method on a
-`Package` that returns the string of the base package. And we defined the
-`available_versions()` method on an `Index` to list existing versions of a given
-package. Then we simply called the `choose_package_with_fewest_versions` helper
-function provided by pubgrub.
+We'll ignore `prioritize` for this example.
+
+Let's implement the second function required by a dependency provider,
+`choose_version`. For that we defined the `base_pkg()` method on a `Package`
+that returns the string of the base package, and the `available_versions()`
+method on an `Index` to list existing versions of a given package in descending
+order.
 
 ```rust
-fn choose_package_version<T: Borrow<Package>, U: Borrow<Range<Version>>>(
+fn choose_version(
     &self,
-    potential_packages: impl Iterator<Item = (T, U)>,
-) -> Result<(T, Option<Version>), Box<dyn std::error::Error>> {
-    Ok(pubgrub::solver::choose_package_with_fewest_versions(
-        |p| self.available_versions(p.base_pkg()).cloned(),
-        potential_packages,
-    ))
+    package: &Self::P,
+    range: &Self::VS,
+) -> Result<Option<Self::V>, Self::Err> {
+    Ok(self.available_versions(p.base_pkg()).find(|version| range.contains(version)).cloned())
 }
 ```
 
@@ -165,7 +162,7 @@ fn get_dependencies(
 
     match package {
         // If we asked for a base package, we simply return the mandatory dependencies.
-        Package::Base(_) => Ok(Dependencies::Known(from_deps(&deps.mandatory))),
+        Package::Base(_) => Ok(Dependencies::Available(from_deps(&deps.mandatory))),
         // Otherwise, we concatenate the feature deps with a dependency to the base package.
         Package::Feature { base, feature } => {
             let feature_deps = deps.optional.get(feature).unwrap();
@@ -174,7 +171,7 @@ fn get_dependencies(
                 Package::Base(base.to_string()),
                 Range::exact(version.clone()),
             );
-            Ok(Dependencies::Known(all_deps))
+            Ok(Dependencies::Available(all_deps))
         },
     }
 }

@@ -5,17 +5,16 @@ versions satisfying all the constraints of direct and indirect dependencies.
 Sometimes however, there is no solution because dependencies are incompatible.
 In such cases, the algorithm returns a
 `PubGrubError::NoSolution(derivation_tree)` where the provided derivation tree
-is a custom binary tree containing the chain of reasons why there is no
-solution.
+is a binary tree containing the chain of reasons why there is no solution.
 
-All the items in the tree are called incompatibilities and may be of two types,
-either "external" or "derived". Leaves of the tree are external
-incompatibilities, and nodes are derived. External incompatibilities express
-facts that are independent of the way this algorithm is implemented such as
-
-- dependencies: package "a" at version 1 depends on package "b" at version 4
-- missing dependencies: dependencies of package "a" are unknown
-- absence of version: there is no version of package "a" higher than version 5
+The items in the tree are called incompatibilities and may be either external.
+Leaves of the tree are external and custom incompatibilities, and nodes are
+derived. External incompatibilities express facts that are independent of the
+way this algorithm is implemented such as package "a" at version 1 depends on
+package "b" at version 4, or that there is no version of package "a" higher than
+version 5. Custom incompatibilities are a user provided generic type parameter
+that can express missing versions, such as that dependencies of package "a" are
+not in cache, but the user requested an offline resolution.
 
 In contrast, derived incompatibilities are obtained during the algorithm
 execution by deduction, such as if "a" depends on "b" and "b" depends on "c",
@@ -27,9 +26,7 @@ is human-friendly is not an easy task. For convenience, this crate provides a
 `String` explanation of the failure. You may use it as follows.
 
 ```rust
-use pubgrub::solver::resolve;
-use pubgrub::report::{DefaultStringReporter, Reporter};
-use pubgrub::error::PubGrubError;
+use pubgrub::{resolve, DefaultStringReporter, PubGrubError, Reporter};
 
 match resolve(&dependency_provider, root_package, root_version) {
     Ok(solution) => println!("{:?}", solution),

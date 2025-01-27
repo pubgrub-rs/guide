@@ -4,54 +4,54 @@ The `DerivationTree` is a custom binary tree where leaves are external
 incompatibilities, defined as follows,
 
 ```rust
-pub enum External<P: Package, V: Version> {
+pub enum External<P: Package, VS: VersionSet, M: Eq + Clone + Debug + Display> {
     /// Initial incompatibility aiming at picking the root package for the first decision.
-    NotRoot(P, V),
-    /// No versions from range satisfy given constraints.
-    NoVersions(P, Range<V>),
-    /// Dependencies of the package are unavailable for versions in that range.
-    UnavailableDependencies(P, Range<V>),
+    NotRoot(P, VS::V),
+    /// There are no versions in the given set for this package.
+    NoVersions(P, VS),
     /// Incompatibility coming from the dependencies of a given package.
-    FromDependencyOf(P, Range<V>, P, Range<V>),
+    FromDependencyOf(P, VS, P, VS),
+    /// The package is unusable for reasons outside pubgrub.
+    Custom(P, VS, M),
 }
 ```
 
 and nodes are derived incompatibilities, defined as follows.
 
 ```rust
-pub struct Derived<P: Package, V: Version> {
+#[derive(Debug, Clone)]
+pub struct Derived<P: Package, VS: VersionSet, M: Eq + Clone + Debug + Display> {
     /// Terms of the incompatibility.
-    pub terms: Map<P, Term<V>>,
-    /// Indicate if that incompatibility is present multiple times
-    /// in the derivation tree.
-    /// If that is the case, it has a unique id, provided in that option.
-    /// Then, we may want to only explain it once,
-    /// and refer to the explanation for the other times.
+    pub terms: Map<P, Term<VS>>,
+    /// Indicate if the incompatibility is present multiple times in the derivation tree.
+    ///
+    /// If that is the case, the number is a unique id. We may want to only explain this
+    /// incompatibility once, then refer to the explanation for the other times.
     pub shared_id: Option<usize>,
     /// First cause.
-    pub cause1: Box<DerivationTree<P, V>>,
+    pub cause1: Arc<DerivationTree<P, VS, M>>,
     /// Second cause.
-    pub cause2: Box<DerivationTree<P, V>>,
+    pub cause2: Arc<DerivationTree<P, VS, M>>,
 }
 ```
 
-The `terms` hashmap contains the terms of the derived incompatibility. The rule
-is that terms of an incompatibility are terms that cannot be all true at the
-same time. So a dependency can for example be expressed with an incompatibility
-containing a positive term, and a negative term. For example, `"root"` at
-version 1 depends on `"a"` at version 4, can be expressed by the incompatibility
-`{root: 1, a: not 4}`. A missing version can be expressed by an incompatibility
-with a single term. So for example, if version 4 of package `"a"` is missing, it
-can be expressed with the incompatibility `{a: 4}` which forbids that version.
-If you want to write your own reporting logic, I'd highly suggest a good
-understanding of incompatibilities by reading first the section of this book on
-internals of the PubGrub algorithm.
+The `terms` hashmap contains the version sets of the derived incompatibility.
+The rule is that terms of an incompatibility are terms that cannot be all true
+at the same time. So a dependency can for example be expressed with an
+incompatibility containing a positive term, and a negative term. For example,
+`"root"` at version 1 depends on `"a"` at version 4, can be expressed by the
+incompatibility `{root: 1, a: not 4}`. A missing version can be expressed by an
+incompatibility with a single term. So for example, if version 4 of package
+`"a"` is missing, it can be expressed with the incompatibility `{a: 4}` which
+forbids that version. If you want to write your own reporting logic, we
+recommend reading first the section of this book on internals of the PubGrub
+algorithm to understand the internals of incompatibilities.
 
-The root of the derivation tree is usually a derived incompatibility containing
-a single term such as `{ "root": 1 }` if we were trying to solve dependencies
-for package `"root"` at version 1. Imagine we had one simple dependency on `"a"`
-at version 4, but somehow that version does not exist. Then version solving
-would fail and return a derivation tree looking like follows.
+The root of the derivation tree is a derived incompatibility containing a single
+term such as `{"root": 1}` if we were trying to solve dependencies for package
+`"root"` at version 1. Imagine we had one simple dependency on `"a"` at version
+4, but somehow that version does not exist. Then version solving would fail and
+return a derivation tree looking like follows.
 
 ```txt
 Derived { root: 1 }
@@ -91,4 +91,4 @@ For ease of processing, the `DerivationTree` duplicates such nodes in the tree,
 but their `shared_id` attribute will hold a `Some(id)` variant. In error
 reporting, you may want to check if you already gave an explanation for a shared
 derived incompatibility, and in such cases maybe use line references instead of
-re-explaning the same thing.
+re-explaining the same thing.

@@ -1,20 +1,23 @@
 # Benchmarking
 
-Performance optimization is a tedious but very rewarding practice if done right.
-It requires rigor and sometime arcane knowledge of lol level details. If you are
-interested in performance optimization for pubgrub, we suggest reading first
-[The Rust Performance Book][perf-book]
+If you are interested in performance optimization for pubgrub, we suggest
+reading [The Rust Performance Book][perf-book].
+[Microbenchmarks generally do not represent real world performance](https://youtu.be/eh3VME3opnE&t=315),
+so it's best to start with a slow case in [uv](https://github.com/astral-sh/uv)
+or [cargo](https://github.com/Eh2406/pubgrub-crates-benchmark) and look at a
+profile, e.g. with [samply](https://github.com/mstange/samply).
 
 [perf-book]: https://nnethercote.github.io/perf-book/
 
-## Side note about code layout and performance
+A first step is optimizing IO/network requests, caching and type size in the
+downstream code, which is usually the bottleneck over the pubgrub algorithm.
+Using `Arc` and splitting types into large and small variants often helps a lot.
+The next step is to optimize prioritization, to reduce the amount of work that
+pubgrub has to do, here pubgrub should give better information to make this
+easier for users. These usually need to be done before pubgrub itself becomes a
+bottleneck.
 
-Changing your username has an impact on the performances of your code. This is
-not clickbait I promess, but simply an effect of layout changes. Se before
-making any assumption on performance improvement or regression try making sure
-that measures are actually reflecting the intent of the code changes and not
-something else. It was shown that code layout changes can produce ±40% in
-performance changes.
+## Side note about code layout and performance
 
 I highly recommend watching the talk ["Performance Matters" by Emery
 Berger][perf-talk] presented at strangeloop 2019 for more information on "sound

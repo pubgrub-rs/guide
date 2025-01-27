@@ -7,30 +7,14 @@ corresponding valid ranges of versions. Then, there is some freedom regarding
 which of those package versions to choose.
 
 The strategy employed to choose such package and version cannot change the
-existence of a solution or not, but can drastically change the performances of
-the solver, or the properties of the solution. The documentation of
-[Pub](https://github.com/dart-lang/pub)
-([Dart](https://github.com/dart-lang/language)'s package manager that uses
-PubGrub under the hood)
-[states the following](https://github.com/dart-lang/pub/blame/SDK-2.10.0-64.0.dev/doc/solver.md#L446-L449):
-
-> Pub chooses the latest matching version of the package with the fewest
-> versions that match the outstanding constraint. This tends to find conflicts
-> earlier if any exist, since these packages will run out of versions to try
-> more quickly. But there's likely room for improvement in these heuristics.
+existence of a solution or not, but can drastically change the performance of
+the solver, or the properties of the solution.
 
 In our implementation of PubGrub, decision making responsibility is divided into
 two pieces. The resolver takes care of making a preselection for potential
 packages and corresponding ranges of versions. Then it's the dependency provider
 that has the freedom of employing the strategy of picking a single package
-version within the `choose_package_version` method.
-
-```rust
-fn choose_package_version<T: Borrow<P>, U: Borrow<Range<V>>>(
-    &self,
-    potential_packages: impl Iterator<Item = (T, U)>,
-) -> Result<(T, Option<V>), Box<dyn Error>>;
-```
+version through `prioritize` and `choose_version`.
 
 ## Picking a package
 
@@ -40,7 +24,7 @@ potential packages, it will continue to be proposed as such until we pick it, or
 a conflict shows up and the solution is backtracked before needing it.
 
 Imagine that one such potential package is limited to a range containing no
-existing version, we are heading directly to a conflict! So we have better
+existing version, we are heading directly to a conflict! So we are better
 dealing with that conflict as soon as possible, instead of delaying it for later
 since we will have to backtrack anyway. Consequently, we always want to pick
 first a conflictual potential package with no valid version. Similarly,
@@ -48,29 +32,15 @@ potential packages with only one valid version give us no choice and limit
 options going forward, so we might want to pick such potential packages before
 others with more version choices. Generalizing this strategy to picking the
 potential package with the lowest number of valid versions is a rather good
-heuristic performance-wise.
-
-This strategy is the one employed by the `OfflineDependencyProvider`. For
-convenience, we also provide a helper function
-`choose_package_with_fewest_versions` directly embedding this strategy. It can
-be used directly in `choose_package_version` if provided a helper function to
-retrieve existing versions of a package
-`list_available_versions: Fn(&P) -> Iterator<Item = V>`.
+heuristic performance-wise. This strategy is the one employed by the
+`OfflineDependencyProvider`. You can use the `PackageResolutionStatistics`
+passed into `prioritize` for a heuristic for conflicting-ness: The more conflict
+a package had, the higher its priority should be.
 
 ## Picking a version
 
-By default, the version returned by the helper function
-`choose_package_with_fewest_versions` is the first compatible one in the
-iterator returned by `list_available_versions` for the chosen package. So you
-can order the iterator with preferred versions first and they will be picked by
-the solver. This is very convenient to easily switch between a dependency
-provider that picks the most recent compatible packages and one that chooses
-instead the oldest compatible versions. Such behavior may be desirable for
-checking that dependencies lower bounds still pass the code tests for example.
-
-In general, letting the dependency provider choose a version in
-`choose_package_version` provides a great deal of flexibility and enables things
-like
+In general, letting the dependency provider choose a version in `choose_version`
+provides a great deal of flexibility and enables things like
 
 - choosing the newest versions,
 - choosing the oldest versions,

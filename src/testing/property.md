@@ -7,6 +7,9 @@ located in the `tests/` directory. Property tests are co-located both with unit
 tests and integration tests depending on required access to some private
 implementation details.
 
+`version_ranges` additionally exposes `version_ranges::proptest_strategy` to
+help testing both pubgrub and user code.
+
 ## Examples
 
 We have multiple example cases inside `tests/examples.rs`. Those mainly come
