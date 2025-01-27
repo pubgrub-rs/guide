@@ -1,3 +1,4 @@
+name: Cloudflare
 on: [push]
 
 jobs:
