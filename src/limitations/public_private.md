@@ -210,7 +210,7 @@ fn get_dependencies(&self, package: &Package, version: &SemVer)
 -> Result<Dependencies<Package, SemVer>, ...> {
     match &package.seeds {
         // A Constraint variant does not have any dependency
-        PkgSeeds::Constraint(_) => Ok(Dependencies::Known(Map::default())),
+        PkgSeeds::Constraint(_) => Ok(Dependencies::Available(Map::default())),
         // A Markers variant has dependencies to:
         // - one Constraint variant per seed marker
         // - one Markers variant per original dependency
@@ -219,7 +219,7 @@ fn get_dependencies(&self, package: &Package, version: &SemVer)
             let seed_constraints = ...;
             // Figure out if there are private dependencies.
             let has_private = ...;
-            Ok(Dependencies::Known(
+            Ok(Dependencies::Available(
                 // Chain the seed constraints with actual dependencies.
                 seed_constraints
                     .chain(index_deps.iter().map(|(p, (privacy, r))| {

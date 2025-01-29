@@ -250,7 +250,7 @@ fn get_dependencies(
                     }
                 })
                 .collect();
-            Ok(Dependencies::Known(pkg_deps))
+            Ok(Dependencies::Available(pkg_deps))
         }
         Package::Proxy { source, target } => {
             // If this is a proxy package, it depends on a single bucket package, the target,
@@ -266,7 +266,7 @@ fn get_dependencies(
                 }),
                 bucket_range.intersection(target_range),
             );
-            Ok(Dependencies::Known(bucket_dep))
+            Ok(Dependencies::Available(bucket_dep))
         }
     }
 }
