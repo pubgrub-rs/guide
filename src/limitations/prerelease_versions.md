@@ -51,7 +51,7 @@ version but not both.
 
 Another issue would be that the proxy and bucket scheme breaks strategies
 depending on ordering of versions. Since we have two proxy versions, one
-targetting the normal bucket, and one targetting the pre-release bucket, a
+targeting the normal bucket, and one targeting the pre-release bucket, a
 strategy aiming at the newest versions will lean towards normal or pre-release
 depending if the newest proxy version is the one for the normal or pre-release
 bucket. Mitigating this issue seems complicated, but hopefully, we are also
@@ -59,7 +59,7 @@ exploring alternative API changes that could enable pre-releases.
 
 ## Multi-dimensional ranges
 
-Building on top of the `Ranges` API, we could implement a custom `VersionSet` of
+Building on top of the `Ranges` API, we can implement a custom `VersionSet` of
 multi-dimensional ranges:
 
 ```rust
@@ -69,10 +69,9 @@ pub struct DoubleRange<V1: Version, V2: Version> {
 }
 ```
 
-With multi-dimensional ranges we could match the semantics of version
-constraints in ways that do not introduce alterations of the core of the
-algorithm. For example, the constraint `2.0.0-alpha <= v < 2.0.0` could be
-matched to:
+With multi-dimensional ranges we can match the semantics of version constraints
+in ways that do not introduce alterations of the core of the algorithm. For
+example, the constraint `2.0.0-alpha <= v < 2.0.0` can be matched to:
 
 ```rust
 DoubleRange {
@@ -81,18 +80,13 @@ DoubleRange {
 }
 ```
 
-And the constraint `2.0.0-alpha <= v < 2.1.0` would have the same
-`prerelease_range` but would have `2.0.0 <= v < 2.1.0` for the normal range.
-Those constraints could also be interpreted differently since not all
-pre-release systems work the same. But the important property is that this
-enables a separation of the dimensions that do not behave consistently with
-regard to the mathematical properties of the sets manipulated.
+And the constraint `2.0.0-alpha <= v < 2.1.0` has the same `prerelease_range`
+but has `2.0.0 <= v < 2.1.0` for the normal range. Those constraints could also
+be interpreted differently since not all pre-release systems work the same. But
+the important property is that this enables a separation of the dimensions that
+do not behave consistently with regard to the mathematical properties of the
+sets manipulated.
 
-All this needs more experimentation, to try reaching a sweet spot API-wise and
-performance-wise. If you are eager to experiment with all the extensions and
-limitations mentioned in this section of the guide for your dependency provider,
-don't hesitate to reach out to us in our [zulip stream][zulip] or in [GitHub
-issues][issues] to let us know how it went!
-
-[zulip]: https://rust-lang.zulipchat.com/#narrow/stream/260232-t-cargo.2FPubGrub
-[issues]: https://github.com/pubgrub-rs/pubgrub/issues
+This strategy is successfully used by
+[semver-pubgrub](https://github.com/pubgrub-rs/semver-pubgrub) to model rust
+dependencies.
