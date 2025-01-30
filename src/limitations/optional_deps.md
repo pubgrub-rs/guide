@@ -125,7 +125,8 @@ pub enum Package {
 }
 ```
 
-We'll ignore `prioritize` for this example.
+Any `prioritize` will work equally well for this example, even just returning a
+constant value.
 
 Let's implement the second function required by a dependency provider,
 `choose_version`. For that we defined the `base_pkg()` method on a `Package`

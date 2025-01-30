@@ -200,10 +200,12 @@ pub struct Seed {
 }
 ```
 
-Implementing `choose_package_version` is trivial if we simply use the function
-`choose_package_with_fewest_versions` provided by pubgrub. Implementing
-`get_dependencies` is slightly more complicated. Have a look at the complete
-implementation if needed, the main ideas are the following.
+Any `prioritize` will work equally well for this example, even just returning a
+constant value. Implementing `choose_version` is straightforward enough not to
+get additional commentary.
+
+Implementing `get_dependencies` is slightly more complicated. Have a look at the
+complete implementation if needed, the main ideas are the following.
 
 ```rust
 fn get_dependencies(&self, package: &Package, version: &SemVer)
