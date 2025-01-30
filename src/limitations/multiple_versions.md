@@ -157,7 +157,7 @@ index.add_deps("a", (2, 0, 0), &[("b", (1, 0, 0)..)]);
 ### Implementing a dependency provider for the index
 
 Since our `Index` is ready, we now have to implement the `DependencyProvider`
-trait for it. As explained previously, we'll need to differenciate packages
+trait for it. As explained previously, we'll need to differentiate packages
 representing buckets and proxies, so we define the following new `Package` type.
 
 ```rust
@@ -180,13 +180,15 @@ pub struct Bucket {
 }
 ```
 
-In order to implement the first required method, `choose_package_version`, we
-simply reuse the `choose_package_with_fewest_versions` helper function provided
-by pubgrub. That one requires a list of available versions for each package, so
-we have to create that list. As explained previously, listing the existing
-(virtual) versions depend on if the package is a bucket or a proxy. For a bucket
-package, we simply need to retrieve the original versions and filter out those
-outside of the bucket.
+Any `prioritize` will work equally well for this example, even just returning a
+constant value.
+
+Let's implement the second function required by a dependency provider,
+`choose_version`. For that we defined a `available_versions()` method on an
+`Index` to list existing versions of a given package in descending order. As
+explained previously, listing the existing (virtual) versions depend on if the
+package is a bucket or a proxy. For a bucket package, we simply need to retrieve
+the original versions and filter out those outside of the bucket.
 
 ```rust
 match package {
