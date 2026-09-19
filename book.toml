@@ -5,3 +5,11 @@ title = "PubGrub Guide"
 
 [output.html]
 mathjax-support = true
+
+# Don't break old links
+[output.html.redirect]
+"/limitations/intro.html" = "../advanced/intro.html"
+"/limitations/optional_deps.html" = "../advanced/optional_deps.html"
+"/limitations/multiple_versions.html" = "../advanced/multiple_versions.html"
+"/limitations/public_private.html" = "../advanced/public_private.html"
+"/limitations/prerelease_versions.html" = "../advanced/prerelease_versions.html"
