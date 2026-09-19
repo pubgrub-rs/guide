@@ -40,8 +40,8 @@ PubGrub is generic over all its internal types. You need:
   }
   ```
 
-- A package priority `Priority` that implements `Ord +
-  Clone`, for example `usize`
+- A package priority `Priority` that implements `Ord + Clone`, for example
+  `usize`
 - A type for custom incompatibilities `Incompatibility` that implements
   `Eq + Clone + Debug + Display`, for example `String`
 - The error type returned from the `DependencyProvider` implements
