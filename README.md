@@ -2,9 +2,10 @@
 
 Source for the PubGrub guide. The published version is available at
 https://pubgrub-rs-guide.pages.dev. This guide is made with [mdBook][mdbook]. To
-compile it locally, install mdBook and run
+compile it locally, install the same mdBook version used in CI and run
 
 ```sh
+cargo install mdbook --version 0.5.4 --locked
 mdbook serve
 ```
 
